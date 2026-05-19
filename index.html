@@ -1,0 +1,2184 @@
+<!DOCTYPE html>
+<html lang="ur" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="theme-color" content="#0f1923">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="کتب خانہ">
+<meta name="description" content="کتب خانہ مینجمنٹ سسٹم">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
+<title>کتب خانہ — مینجمنٹ سسٹم</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Nastaliq+Urdu:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jsQR/1.4.0/jsQR.min.js"></script>
+<!-- Firebase SDK -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js";
+  import { getFirestore, doc, setDoc, getDoc, onSnapshot, enableIndexedDbPersistence } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
+
+  const savedApiKey = localStorage.getItem('kb_fb_apikey');
+  const savedAppId = localStorage.getItem('kb_fb_appid');
+
+  const firebaseConfig = {
+    apiKey: savedApiKey || "AIzaSyC-SgnJ7OE45e88rc_kr5tj0i6bQKxfKBo",
+    authDomain: "kitabkhana-81879.firebaseapp.com",
+    projectId: "kitabkhana-81879",
+    storageBucket: "kitabkhana-81879.firebasestorage.app",
+    messagingSenderId: "130277560266",
+    appId: savedAppId || "1:130277560266:web:2c6167077b610841c50933",
+    measurementId: "G-294416NZ4R"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+
+  // آف لائن سپورٹ
+  try {
+    enableIndexedDbPersistence(db);
+  } catch(e) {}
+
+  // Global میں expose کریں
+  window._firebaseDb = db;
+  window._firebaseReady = true;
+  window._fsDoc = doc;
+  window._fsSetDoc = setDoc;
+  window._fsGetDoc = getDoc;
+  window._fsOnSnapshot = onSnapshot;
+  
+  // باہر کے syncNow کو بتائیں
+  document.dispatchEvent(new Event('firebaseReady'));
+</script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+:root{
+  --bg:#0f1923;--bg2:#162030;--bg3:#1d2d40;--bg4:#243547;
+  --gold:#c9a84c;--gold2:#e8c97a;--gold3:#f5e0a0;
+  --text:#e8dcc8;--text2:#a89880;--text3:#6b7c8d;
+  --green:#2ecc71;--red:#e74c3c;--blue:#3498db;--orange:#e67e22;
+  --border:rgba(201,168,76,0.2);--border2:rgba(201,168,76,0.08);
+  --shadow:0 8px 32px rgba(0,0,0,0.4);
+  --radius:12px;--radius2:8px;
+  --font-ur:'Noto Nastaliq Urdu',serif;
+  --font-mono:'JetBrains Mono',monospace;
+}
+body.day-mode{
+  --bg:#f4f0e8;--bg2:#fffdf7;--bg3:#f0ead8;--bg4:#e8dfc8;
+  --gold:#8a6a1a;--gold2:#a07830;--gold3:#7a5a10;
+  --text:#2a1f0a;--text2:#5a4a2a;--text3:#8a7a5a;
+  --green:#1a7a3a;--red:#c0392b;--blue:#2471a3;--orange:#c0670a;
+  --border:rgba(138,106,26,0.3);--border2:rgba(138,106,26,0.12);
+  --shadow:0 8px 32px rgba(0,0,0,0.12);
+}
+body.day-mode input,body.day-mode select,body.day-mode textarea{color:var(--text)}
+body.day-mode .badge.avail{background:rgba(26,122,58,0.12);color:var(--green);border-color:rgba(26,122,58,0.25)}
+body.day-mode .badge.issued{background:rgba(192,57,43,0.12);color:var(--red);border-color:rgba(192,57,43,0.25)}
+body.day-mode .alert.success{background:#d4f0dd;color:var(--green);border-color:rgba(26,122,58,0.3)}
+body.day-mode .alert.error{background:#fad7d3;color:var(--red);border-color:rgba(192,57,43,0.3)}
+body.day-mode .alert.info{background:#d6eaf8;color:var(--blue);border-color:rgba(36,113,163,0.3)}
+body.day-mode .modal-bg{background:rgba(0,0,0,0.4)}
+.theme-btn{background:none;border:1px solid var(--border);border-radius:20px;padding:5px 12px;color:var(--text2);font-size:12px;cursor:pointer;transition:all 0.2s;font-family:var(--font-ur)}
+.theme-btn:hover{border-color:var(--gold);color:var(--gold)}
+html,body{height:100%;font-family:var(--font-ur);background:var(--bg);color:var(--text);overflow:hidden}
+/* LAYOUT */
+.app{display:flex;height:100vh;width:100vw;overflow:hidden}
+/* SIDEBAR */
+.sidebar{width:220px;background:var(--bg2);border-left:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0;transition:transform 0.3s;z-index:50}
+.logo-area{padding:24px 16px 20px;border-bottom:1px solid var(--border2);text-align:center}
+.logo-icon{font-size:36px;display:block;margin-bottom:6px}
+.logo-title{font-size:15px;font-weight:700;color:var(--gold);letter-spacing:0.5px}
+.logo-sub{font-size:10px;color:var(--text3);font-family:var(--font-mono);margin-top:2px}
+.nav{flex:1;padding:12px 8px;overflow-y:auto}
+.nav-item{display:flex;align-items:center;gap:10px;padding:11px 14px;border-radius:var(--radius2);cursor:pointer;color:var(--text2);font-size:13px;transition:all 0.2s;margin-bottom:3px;border:1px solid transparent;white-space:nowrap}
+.nav-item:hover{background:var(--bg3);color:var(--text)}
+.nav-item.active{background:linear-gradient(135deg,rgba(201,168,76,0.15),rgba(201,168,76,0.05));color:var(--gold);border-color:var(--border);font-weight:600}
+.nav-icon{font-size:16px;flex-shrink:0}
+.sidebar-footer{padding:12px;border-top:1px solid var(--border2)}
+.sidebar-stat{background:var(--bg3);border-radius:var(--radius2);padding:10px 12px;display:flex;justify-content:space-between;align-items:center}
+.sidebar-stat-lbl{font-size:11px;color:var(--text3)}
+.sidebar-stat-val{font-family:var(--font-mono);font-size:14px;color:var(--gold);font-weight:600}
+/* MAIN */
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden}
+/* TOPBAR */
+.topbar{height:56px;background:var(--bg2);border-bottom:1px solid var(--border2);display:flex;align-items:center;padding:0 20px;gap:12px;flex-shrink:0}
+.menu-btn{display:none;background:none;border:none;color:var(--text);font-size:20px;cursor:pointer;padding:4px}
+.page-title{font-size:17px;font-weight:700;color:var(--text);flex:1}
+.topbar-actions{display:flex;gap:8px}
+/* CONTENT */
+.content{flex:1;overflow-y:auto;padding:20px}
+.section{display:none}
+.section.active{display:block}
+/* STATS GRID */
+.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px}
+.stat-card{background:var(--bg2);border:1px solid var(--border2);border-radius:var(--radius);padding:16px;position:relative;overflow:hidden;transition:border-color 0.2s}
+.stat-card:hover{border-color:var(--border)}
+.stat-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px}
+.stat-card.s1::before{background:var(--gold)}
+.stat-card.s2::before{background:var(--green)}
+.stat-card.s3::before{background:var(--red)}
+.stat-card.s4::before{background:var(--blue)}
+.stat-num{font-size:28px;font-weight:700;font-family:var(--font-mono);color:var(--text);margin-bottom:4px}
+.stat-lbl{font-size:12px;color:var(--text3)}
+.stat-icon{position:absolute;left:12px;top:50%;transform:translateY(-50%);font-size:28px;opacity:0.15}
+/* CARDS */
+.card{background:var(--bg2);border:1px solid var(--border2);border-radius:var(--radius);padding:18px;margin-bottom:14px}
+.card-title{font-size:14px;font-weight:700;color:var(--gold);margin-bottom:14px;display:flex;align-items:center;gap:8px}
+/* FORM */
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.form-grid.three{grid-template-columns:1fr 1fr 1fr}
+.form-group{display:flex;flex-direction:column;gap:5px}
+.form-group.full{grid-column:1/-1}
+label{font-size:12px;color:var(--text2);font-weight:500}
+input,select,textarea{background:var(--bg3);border:1px solid rgba(201,168,76,0.15);border-radius:var(--radius2);padding:9px 12px;font-size:13px;color:var(--text);outline:none;width:100%;font-family:var(--font-ur);transition:border-color 0.2s}
+input:focus,select:focus,textarea:focus{border-color:var(--gold);box-shadow:0 0 0 3px rgba(201,168,76,0.08)}
+input[readonly]{opacity:0.7;cursor:default;font-family:var(--font-mono);color:var(--gold);font-weight:600;font-size:14px}
+select option{background:var(--bg3)}
+/* BUTTONS */
+.btn{padding:9px 18px;border-radius:var(--radius2);border:1px solid var(--border);background:var(--bg3);color:var(--text);font-size:13px;cursor:pointer;font-family:var(--font-ur);transition:all 0.2s;white-space:nowrap;font-weight:500}
+.btn:hover{background:var(--bg4);border-color:var(--gold);color:var(--gold)}
+.btn.primary{background:linear-gradient(135deg,var(--gold),#a07830);color:#0f1923;border-color:var(--gold);font-weight:700}
+.btn.primary:hover{background:linear-gradient(135deg,var(--gold2),var(--gold));transform:translateY(-1px);box-shadow:0 4px 16px rgba(201,168,76,0.3)}
+.btn.success{background:rgba(46,204,113,0.15);color:var(--green);border-color:rgba(46,204,113,0.3)}
+.btn.danger{background:rgba(231,76,60,0.15);color:var(--red);border-color:rgba(231,76,60,0.3)}
+.btn.info{background:rgba(52,152,219,0.15);color:var(--blue);border-color:rgba(52,152,219,0.3)}
+.btn.sm{padding:6px 12px;font-size:12px}
+.btn-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+/* TABLE */
+.table-wrap{overflow-x:auto;border-radius:var(--radius);border:1px solid var(--border2)}
+table{width:100%;border-collapse:collapse;min-width:700px}
+thead{background:var(--bg3)}
+th{padding:10px 12px;text-align:right;font-size:12px;color:var(--gold);font-weight:600;border-bottom:1px solid var(--border2);white-space:nowrap}
+td{padding:10px 12px;font-size:13px;color:var(--text);border-bottom:1px solid var(--border2);vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tbody tr{transition:background 0.15s}
+tbody tr:hover{background:rgba(201,168,76,0.04)}
+/* BADGE */
+.badge{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600}
+.badge.avail{background:rgba(46,204,113,0.12);color:var(--green);border:1px solid rgba(46,204,113,0.2)}
+.badge.issued{background:rgba(231,76,60,0.12);color:var(--red);border:1px solid rgba(231,76,60,0.2)}
+/* SEARCH BAR */
+.search-bar{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap}
+.search-bar input{flex:1;min-width:180px}
+/* SCAN BOX */
+.scan-box{background:linear-gradient(135deg,rgba(201,168,76,0.08),rgba(201,168,76,0.02));border:1px solid var(--border);border-radius:var(--radius);padding:16px}
+.scan-row{display:flex;gap:8px}
+.scan-row input{flex:1}
+.scan-result{margin-top:10px;font-size:13px;min-height:20px;transition:all 0.3s}
+/* QR AREA */
+.qr-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px;padding:4px}
+.qr-card{background:white;border-radius:var(--radius2);padding:12px;text-align:center;color:#111;border:1px solid #e0e0e0}
+.qr-card .qr-title{font-size:10px;margin-bottom:6px;color:#333;font-family:var(--font-ur);max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.qr-card .qr-serial{font-family:var(--font-mono);font-size:11px;color:#111;font-weight:700;margin-top:6px;letter-spacing:1px}
+.qr-card .qr-meta{font-size:9px;color:#666;margin-top:2px}
+/* ALERT */
+.alert-wrap{position:fixed;top:16px;left:50%;transform:translateX(-50%);z-index:999;display:flex;flex-direction:column;gap:6px;width:min(400px,90vw)}
+.alert{padding:12px 18px;border-radius:var(--radius2);font-size:13px;font-weight:500;animation:slideIn 0.3s ease;border:1px solid transparent;box-shadow:var(--shadow)}
+.alert.success{background:#1a3a2a;color:var(--green);border-color:rgba(46,204,113,0.3)}
+.alert.error{background:#3a1a1a;color:var(--red);border-color:rgba(231,76,60,0.3)}
+.alert.info{background:#1a2a3a;color:var(--blue);border-color:rgba(52,152,219,0.3)}
+@keyframes slideIn{from{transform:translateY(-20px);opacity:0}to{transform:translateY(0);opacity:1}}
+/* MODAL */
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:200;align-items:center;justify-content:center;padding:16px;backdrop-filter:blur(4px)}
+.modal-bg.open{display:flex}
+.modal{background:var(--bg2);border:1px solid var(--border);border-radius:16px;padding:24px;width:100%;max-width:480px;max-height:90vh;overflow-y:auto}
+.modal-title{font-size:16px;font-weight:700;color:var(--gold);margin-bottom:16px}
+.modal-close{float:left;background:none;border:none;color:var(--text2);font-size:20px;cursor:pointer;line-height:1}
+/* HISTORY TABLE */
+.hist-row-issued{background:rgba(231,76,60,0.05)}
+.hist-row-returned{background:rgba(46,204,113,0.03)}
+/* MOBILE SIDEBAR OVERLAY */
+.sidebar-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:40}
+/* RESPONSIVE */
+@media(max-width:768px){
+  .sidebar{position:fixed;right:0;top:0;bottom:0;transform:translateX(100%)}
+  .sidebar.open{transform:translateX(0)}
+  .sidebar-overlay.open{display:block}
+  .menu-btn{display:block}
+  .stats-grid{grid-template-columns:1fr 1fr}
+  .form-grid{grid-template-columns:1fr}
+  .form-grid.three{grid-template-columns:1fr 1fr}
+  .content{padding:12px}
+  .main{width:100vw}
+}
+@media(max-width:480px){
+  .stats-grid{grid-template-columns:1fr 1fr}
+  .stat-num{font-size:22px}
+  .form-grid.three{grid-template-columns:1fr}
+}
+/* IMPORT PROGRESS */
+.progress-bar{width:100%;height:6px;background:var(--bg3);border-radius:3px;overflow:hidden;margin-top:8px;display:none}
+.progress-fill{height:100%;background:linear-gradient(90deg,var(--gold),var(--gold2));width:0%;transition:width 0.3s;border-radius:3px}
+/* EMPTY */
+.empty{text-align:center;padding:40px;color:var(--text3);font-size:13px}
+/* SCROLLBAR */
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:var(--bg)}
+::-webkit-scrollbar-thumb{background:var(--bg4);border-radius:3px}
+::-webkit-scrollbar-thumb:hover{background:var(--text3)}
+/* PRINT */
+@media print{
+  .app,.sidebar,.topbar,.btn-row,.search-bar{display:none!important}
+  .print-area{display:block!important}
+  body{background:white}
+}
+.print-area{display:none}
+/* LOADING */
+.loading{display:flex;align-items:center;justify-content:center;gap:10px;padding:30px;color:var(--text2);font-size:13px}
+.spin{animation:spin 1s linear infinite;font-size:18px}
+@keyframes spin{to{transform:rotate(360deg)}}
+/* PAGINATION */
+.pagination{display:flex;align-items:center;justify-content:center;gap:8px;padding:14px;flex-wrap:wrap}
+.pag-btn{padding:6px 14px;border-radius:var(--radius2);border:1px solid var(--border2);background:var(--bg3);color:var(--text2);font-size:12px;cursor:pointer;transition:all 0.2s;font-family:var(--font-ur)}
+.pag-btn:hover{border-color:var(--gold);color:var(--gold)}
+.pag-btn.active{background:linear-gradient(135deg,rgba(201,168,76,0.2),rgba(201,168,76,0.08));color:var(--gold);border-color:var(--border);font-weight:700}
+.pag-btn:disabled{opacity:0.35;cursor:default}
+.pag-info{font-size:11px;color:var(--text3);font-family:var(--font-mono)}
+/* DELETE ALL */
+.danger-zone{border:1px solid rgba(231,76,60,0.2);border-radius:var(--radius);padding:14px 16px;margin-top:14px;background:rgba(231,76,60,0.04)}
+.danger-zone-title{font-size:12px;color:var(--red);font-weight:600;margin-bottom:10px}
+/* CATEGORY LIST */
+.cat-list{display:flex;flex-direction:column;gap:6px;max-height:420px;overflow-y:auto;padding-right:4px}
+.cat-item{display:flex;align-items:center;gap:8px;padding:9px 12px;background:var(--bg3);border:1px solid var(--border2);border-radius:var(--radius2);transition:border-color 0.2s}
+.cat-item:hover{border-color:var(--border)}
+.cat-name{flex:1;font-size:13px;color:var(--text)}
+.cat-edit-input{flex:1;background:var(--bg4);border:1px solid var(--gold);border-radius:6px;padding:5px 9px;font-size:13px;color:var(--text);font-family:var(--font-ur);outline:none}
+.cat-add-row{display:flex;gap:8px;margin-bottom:12px}
+.cat-add-row input{flex:1}
+.cat-count{font-size:10px;color:var(--text3);font-family:var(--font-mono);white-space:nowrap}
+/* ===== LOGIN ===== */
+#loginScreen{position:fixed;inset:0;z-index:9999;background:var(--bg1);display:flex;align-items:center;justify-content:center;padding:20px}
+.login-box{background:var(--bg2);border:1px solid var(--border);border-radius:16px;padding:32px 28px;width:100%;max-width:380px;box-shadow:0 20px 60px rgba(0,0,0,0.5);text-align:center}
+.login-logo{font-size:40px;margin-bottom:6px}
+.login-title{font-size:22px;font-weight:700;color:var(--gold);margin-bottom:4px}
+.login-sub{font-size:12px;color:var(--text3);margin-bottom:22px}
+.role-tabs{display:flex;gap:6px;margin-bottom:18px;background:var(--bg3);border-radius:10px;padding:4px}
+.role-tab{flex:1;padding:9px 4px;border-radius:8px;cursor:pointer;font-size:12px;text-align:center;color:var(--text2);transition:.2s;border:none;background:transparent}
+.role-tab.active{background:var(--gold);color:#000;font-weight:700}
+.login-field{text-align:right;margin-bottom:13px}
+.login-field label{display:block;font-size:12px;color:var(--text3);margin-bottom:4px}
+.login-field input{width:100%;padding:10px 12px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--text1);font-size:14px;font-family:var(--font-mono);box-sizing:border-box}
+.login-btn{width:100%;padding:13px;background:var(--gold);color:#000;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;margin-top:6px}
+.login-err{color:var(--red);font-size:12px;margin-top:8px;min-height:18px}
+/* ===== MEMBER PORTAL ===== */
+#memberPortal{position:fixed;inset:0;z-index:9998;background:var(--bg1);overflow-y:auto;padding:20px;display:none}
+.portal-header{text-align:center;margin-bottom:20px;padding-top:10px}
+.portal-title{font-size:22px;color:var(--gold);font-weight:700}
+.portal-sub{font-size:12px;color:var(--text3);font-family:var(--font-mono);margin-top:4px}
+.book-card{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:12px;max-width:600px;margin-left:auto;margin-right:auto}
+.book-card-name{font-size:16px;font-weight:600;color:var(--text1);margin-bottom:8px}
+.book-card-meta{font-size:12px;color:var(--text2);display:flex;flex-wrap:wrap;gap:6px}
+.book-card-meta span{background:var(--bg3);padding:3px 8px;border-radius:4px}
+.overdue-tag{background:rgba(231,76,60,0.2)!important;color:var(--red)!important}
+/* ===== VIEWER ===== */
+#viewerBadge{display:none;position:fixed;top:60px;left:50%;transform:translateX(-50%);z-index:999;background:rgba(52,152,219,0.95);color:#fff;padding:5px 16px;border-radius:20px;font-size:12px;pointer-events:none}
+body.role-viewer .admin-only{display:none!important}
+body.role-viewer #syncBtn{display:none!important}
+</style>
+</head>
+<body>
+
+<!-- LOGIN SCREEN -->
+<div id="loginScreen">
+  <div class="login-box">
+    <div class="login-logo">📚</div>
+    <div class="login-title">کتب خانہ</div>
+    <div class="login-sub">Management System v3.0</div>
+    <div class="role-tabs">
+      <button class="role-tab active" onclick="selectRole('admin')" id="tab-admin">🔐 ایڈمن</button>
+      <button class="role-tab" onclick="selectRole('viewer')" id="tab-viewer">👁 ویوور</button>
+      <button class="role-tab" onclick="selectRole('member')" id="tab-member">👤 ممبر</button>
+    </div>
+    <div id="login-admin-fields">
+      <div class="login-field">
+        <label>پاسورڈ</label>
+        <input type="password" id="adminPass" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()">
+      </div>
+    </div>
+    <div id="login-viewer-fields" style="display:none">
+      <div class="login-field">
+        <label>Viewer پاسورڈ</label>
+        <input type="password" id="viewerPass" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()">
+      </div>
+    </div>
+    <div id="login-member-fields" style="display:none">
+      <div class="login-field">
+        <label>ممبر ID</label>
+        <input type="text" id="memberIdInp" placeholder="مثال: MBR-00001" style="font-family:var(--font-mono);text-transform:uppercase" onkeydown="if(event.key==='Enter')doLogin()">
+      </div>
+      <div class="login-field">
+        <label>پاسورڈ</label>
+        <input type="password" id="memberPassInp" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()">
+      </div>
+    </div>
+    <button class="login-btn" onclick="doLogin()">داخل ہوں</button>
+    <div class="login-err" id="loginErr"></div>
+    <div style="font-size:11px;color:var(--text3);margin-top:14px;opacity:0.6">پہلی بار: ایڈمن پاسورڈ <code>admin123</code></div>
+  </div>
+</div>
+
+<!-- MEMBER PORTAL -->
+<div id="memberPortal">
+  <div class="portal-header">
+    <div class="portal-title">📚 میری کتابیں</div>
+    <div class="portal-sub" id="portalMemberName">—</div>
+    <div class="portal-sub" id="portalMemberId" style="color:var(--gold)">—</div>
+  </div>
+  <div id="portalBooks"></div>
+  <div style="text-align:center;margin-top:20px">
+    <button onclick="logoutPortal()" style="background:var(--bg3);border:1px solid var(--border);color:var(--text2);padding:10px 24px;border-radius:8px;cursor:pointer;font-size:13px">خروج</button>
+  </div>
+</div>
+
+<!-- VIEWER BADGE -->
+<div id="viewerBadge">👁 ویوور موڈ — صرف دیکھنا</div>
+
+<div class="alert-wrap" id="alertWrap"></div>
+<div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
+
+<div class="app">
+<!-- SIDEBAR -->
+<aside class="sidebar" id="sidebar">
+  <div class="logo-area">
+    <span class="logo-icon">📚</span>
+    <div class="logo-title">کتب خانہ</div>
+    <div class="logo-sub">MANAGEMENT SYSTEM v3.0</div>
+    <div id="libIdDisplay" style="font-size:9px;color:var(--gold);font-family:var(--font-mono);margin-top:4px;cursor:pointer;opacity:0.7" onclick="showLibraryInfo()" title="لائبریری آئی ڈی">📡 —</div>
+  </div>
+  <nav class="nav">
+    <div class="nav-item active" onclick="showSection('dashboard')"><span class="nav-icon">🏠</span>ڈیش بورڈ</div>
+    <div class="nav-item" onclick="showSection('books')"><span class="nav-icon">📚</span>تمام کتابیں</div>
+    <div class="nav-item admin-only" onclick="showSection('add')"><span class="nav-icon">➕</span>کتاب شامل</div>
+    <div class="nav-item admin-only" onclick="showSection('issue')"><span class="nav-icon">📤</span>کتاب جاری</div>
+    <div class="nav-item admin-only" onclick="showSection('returnBook')"><span class="nav-icon">📥</span>واپسی</div>
+    <div class="nav-item admin-only" onclick="showSection('qrprint')"><span class="nav-icon">🔳</span>QR پرنٹ</div>
+    <div class="nav-item admin-only" onclick="showSection('importExport')"><span class="nav-icon">📊</span>امپورٹ/ایکسپورٹ</div>
+    <div class="nav-item admin-only" onclick="showSection('history')"><span class="nav-icon">📋</span>تاریخ</div>
+    <div class="nav-item admin-only" onclick="showSection('categories')"><span class="nav-icon">🏷</span>زمرہ جات</div>
+    <div class="nav-item admin-only" onclick="showSection('members')"><span class="nav-icon">👥</span>اراکین</div>
+  </nav>
+  <div class="sidebar-footer">
+    <div class="sidebar-stat">
+      <span class="sidebar-stat-lbl">کل کتابیں</span>
+      <span class="sidebar-stat-val" id="sb-total">0</span>
+    </div>
+    <div id="currentRoleBadge" style="font-size:11px;color:var(--text3);margin-top:6px;text-align:center"></div>
+    <button onclick="doLogout()" style="width:100%;margin-top:8px;padding:7px;background:var(--bg4);border:1px solid var(--border);color:var(--text2);border-radius:8px;cursor:pointer;font-size:12px">🚪 خروج</button>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<main class="main">
+  <div class="topbar">
+    <button class="menu-btn" onclick="toggleSidebar()">☰</button>
+    <div class="page-title" id="pageTitle">ڈیش بورڈ</div>
+    <div class="topbar-actions">
+      <button class="theme-btn" id="themeBtn" onclick="toggleTheme()">☀️ ڈے موڈ</button>
+      <button class="btn sm" id="pwaInstallBtn" onclick="installPWA()" style="display:none;background:var(--green);color:#000" title="App Install کریں">📲 Install</button>
+      <button class="btn sm admin-only" id="syncBtn" onclick="syncNow()" title="ابھی سنک کریں">🔄 سنک</button>
+      <button class="btn sm admin-only" onclick="showSection('add')">+ کتاب</button>
+    </div>
+  </div>
+
+  <div class="content">
+
+  <!-- DASHBOARD -->
+  <div class="section active" id="sec-dashboard">
+    <div class="stats-grid">
+      <div class="stat-card s1"><div class="stat-num" id="st-total">0</div><div class="stat-lbl">کل کتابیں</div><span class="stat-icon">📚</span></div>
+      <div class="stat-card s2"><div class="stat-num" id="st-avail">0</div><div class="stat-lbl">دستیاب</div><span class="stat-icon">✅</span></div>
+      <div class="stat-card s3"><div class="stat-num" id="st-issued">0</div><div class="stat-lbl">جاری شدہ</div><span class="stat-icon">📤</span></div>
+      <div class="stat-card s4"><div class="stat-num" id="st-members">0</div><div class="stat-lbl">اراکین</div><span class="stat-icon">👤</span></div>
+    </div>
+
+    <div class="card scan-box">
+      <div class="card-title">🔍 فوری اسکین</div>
+      <div class="scan-row">
+        <input id="scanInput" placeholder="KIT نمبر یا QR اسکین کریں..." onkeydown="if(event.key==='Enter')doScan()">
+        <button class="btn primary" onclick="doScan()">اسکین</button>
+        <button class="btn info" onclick="openCameraScanner('scan')" title="کیمرہ سے اسکین">📷</button>
+      </div>
+      <div class="scan-result" id="scanResult"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">📤 حال ہی میں جاری شدہ</div>
+      <div id="recentIssues"><div class="empty">ابھی کوئی اجراء نہیں</div></div>
+    </div>
+  </div>
+
+  <!-- BOOKS -->
+  <div class="section" id="sec-books">
+    <div class="search-bar">
+      <input id="bookSearch" placeholder="نام، مصنف، KIT نمبر سے تلاش..." oninput="searchBooks()">
+      <select id="bookFilter" onchange="searchBooks()" style="width:130px">
+        <option value="">سب حالتیں</option>
+        <option value="available">دستیاب</option>
+        <option value="issued">جاری شدہ</option>
+      </select>
+      <select id="bookCatFilter" onchange="searchBooks()" style="width:160px">
+        <option value="">سب زمرے</option>
+      </select>
+      <button class="btn sm success" onclick="showSection('add')">+ نئی کتاب</button>
+      <button class="btn sm danger" onclick="deleteAllBooks()">🗑 سب حذف</button>
+    </div>
+    <div id="booksCountBar" style="font-size:12px;color:var(--text3);margin-bottom:8px;font-family:var(--font-mono)"></div>
+    <div class="card" style="padding:0;overflow:hidden">
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Book Number</th>
+              <th>Art & Sub Subtitle</th>
+              <th>Almari No</th>
+              <th>KIT / Internal No</th>
+              <th>کتاب کا نام</th>
+              <th>جلد</th>
+              <th>مصنف</th>
+              <th>ناشر</th>
+              <th>حالت</th>
+              <th>عمل</th>
+            </tr>
+          </thead>
+          <tbody id="booksBody"></tbody>
+        </table>
+      </div>
+      <div class="pagination" id="booksPagination"></div>
+    </div>
+    <div id="booksEmpty" class="empty" style="display:none">کوئی کتاب نہیں ملی</div>
+  </div>
+
+  <!-- ADD BOOK -->
+  <div class="section" id="sec-add">
+    <div class="card">
+      <div class="card-title">➕ نئی کتاب شامل کریں</div>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Book Number (A) — خودکار</label>
+          <input id="f-bookNum" readonly placeholder="خودکار بنے گا...">
+        </div>
+        <div class="form-group">
+          <label>Art & Sub Subtitle (B) — بعد میں بھریں</label>
+          <div style="display:flex;gap:6px">
+            <select id="f-artSub" style="flex:1" onchange="onArtSubChange()"></select>
+            <button type="button" class="btn sm" onclick="showSection('categories')" title="زمرہ جات منظم کریں" style="flex-shrink:0">⚙️</button>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Almari Number (C)</label>
+          <input id="f-almari" placeholder="مثال: الف-۱">
+        </div>
+        <div class="form-group">
+          <label>Subtitle & Internal Number (D) — خودکار QR</label>
+          <input id="f-internal" readonly placeholder="خودکار بنے گا...">
+        </div>
+        <div class="form-group">
+          <label>کتاب کا نام (E) *</label>
+          <input id="f-name" placeholder="کتاب کا مکمل نام">
+        </div>
+        <div class="form-group">
+          <label>جلد Volume (F)</label>
+          <input id="f-volume" placeholder="مثال: مقدمہ، ۱، ۲">
+        </div>
+        <div class="form-group">
+          <label>مصنف Author (G)</label>
+          <input id="f-author" placeholder="مصنف کا نام">
+        </div>
+        <div class="form-group">
+          <label>ناشر Publisher (H)</label>
+          <input id="f-pub" placeholder="اشاعتی ادارہ">
+        </div>
+        <div class="form-group">
+          <label>سن اشاعت</label>
+          <input id="f-year" placeholder="مثال: 2024">
+        </div>
+      </div>
+      <div class="btn-row">
+        <button class="btn primary" onclick="saveBook()">✅ کتاب محفوظ کریں</button>
+        <button class="btn" onclick="clearForm()">🗑 صاف</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ISSUE -->
+  <div class="section" id="sec-issue">
+    <div class="card">
+      <div class="card-title">📤 کتاب جاری کریں</div>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>KIT / Internal نمبر *</label>
+          <div style="display:flex;gap:6px">
+            <input id="i-kit" placeholder="KIT-0001" oninput="lookupIssue()" style="flex:1">
+            <button class="btn sm info" onclick="openCameraScanner('issue')" title="کیمرہ">📷</button>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>رکن کا نام *</label>
+          <input id="i-member" placeholder="قاری کا نام">
+        </div>
+        <div class="form-group">
+          <label>فون نمبر</label>
+          <input id="i-phone" placeholder="رابطہ نمبر">
+        </div>
+        <div class="form-group">
+          <label>واپسی کی تاریخ</label>
+          <input id="i-due" type="date">
+        </div>
+      </div>
+      <div id="issueInfo" style="font-size:13px;margin:8px 0;min-height:20px"></div>
+      <div class="btn-row">
+        <button class="btn success" onclick="doIssue()">📤 جاری کریں</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- RETURN -->
+  <div class="section" id="sec-returnBook">
+    <div class="card">
+      <div class="card-title">📥 کتاب واپسی</div>
+      <div style="display:flex;gap:8px;align-items:flex-end">
+        <div class="form-group" style="flex:1">
+          <label>KIT / Internal نمبر</label>
+          <div style="display:flex;gap:6px">
+            <input id="r-kit" placeholder="KIT-0001" oninput="lookupReturn()" style="flex:1">
+            <button class="btn sm info" onclick="openCameraScanner('return')" title="کیمرہ">📷</button>
+          </div>
+        </div>
+        <button class="btn danger" onclick="doReturn()" style="margin-bottom:0">📥 واپسی درج</button>
+      </div>
+      <div id="returnInfo" style="font-size:13px;margin-top:10px;min-height:20px"></div>
+    </div>
+    <div class="card">
+      <div class="card-title">📋 حالیہ واپسی</div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>KIT</th><th>کتاب</th><th>رکن</th><th>اجراء</th><th>واپسی</th><th>حالت</th></tr></thead>
+          <tbody id="returnBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- QR PRINT -->
+  <div class="section" id="sec-qrprint">
+    <div class="card">
+      <div class="card-title">🔳 QR کوڈ پرنٹ</div>
+      <div class="btn-row" style="margin-top:0;margin-bottom:12px">
+        <button class="btn primary" onclick="generateAllQR()">تمام کتابوں کے QR</button>
+        <button class="btn info" onclick="generateSelectedQR()">منتخب کتابوں کے QR</button>
+        <button class="btn success" onclick="printQR()">🖨 پرنٹ کریں</button>
+      </div>
+      <div class="form-group" style="margin-bottom:12px">
+        <label>مخصوص KIT نمبر (ایک یا زیادہ، کوما سے الگ)</label>
+        <input id="qrSpecific" placeholder="مثال: KIT-0001, KIT-0005, KIT-0010">
+      </div>
+      <div id="qrGrid" class="qr-grid"></div>
+    </div>
+  </div>
+
+  <!-- IMPORT/EXPORT -->
+  <div class="section" id="sec-importExport">
+    <div class="card" style="border-color:rgba(52,152,219,0.3);background:rgba(52,152,219,0.05)">
+      <div class="card-title">📡 کلاؤڈ سنک — الگ الگ لائبریری آئی ڈی</div>
+      <div style="font-size:12px;color:var(--text2);margin-bottom:12px;line-height:2">
+        ہر لائبریری کی اپنی <strong style="color:var(--gold)">Library ID</strong> ہے — موبائل اور کمپیوٹر دونوں میں یہی ID ڈالیں تو ریکارڈ سنک ہوجائے گا۔ آف لائن بھی کام کرتا ہے، نیٹ ملنے پر خودبخود سنک ہوتا ہے۔
+      </div>
+      <div style="background:var(--bg3);border-radius:8px;padding:12px;margin-bottom:12px">
+        <div style="font-size:11px;color:var(--text3);margin-bottom:6px">آپ کی Library ID:</div>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+          <code id="libIdCode" style="font-family:var(--font-mono);font-size:14px;color:var(--gold);font-weight:700;background:var(--bg4);padding:6px 12px;border-radius:6px;border:1px solid var(--border);flex:1;min-width:200px;word-break:break-all">لوڈ ہو رہا ہے...</code>
+          <button class="btn sm info" onclick="copyLibId()">📋 کاپی</button>
+          <button class="btn sm danger" onclick="changeLibId()">🔄 بدلیں</button>
+        </div>
+        <div style="font-size:11px;color:var(--text3);margin-top:6px">کسی اور ڈیوائس پر یہ ID ڈالیں تو وہاں بھی یہی ریکارڈ ملے گا</div>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:10px">
+        <button class="btn primary" onclick="syncNow()">🔄 ابھی سنک کریں</button>
+        <button class="btn success" onclick="connectNewDevice()">📱 نئی ڈیوائس جوڑیں</button>
+        <span id="syncStatus" style="font-size:12px;color:var(--text3)">—</span>
+      </div>
+      <div id="syncLog" style="font-size:11px;color:var(--text3);max-height:80px;overflow-y:auto;font-family:var(--font-mono)"></div>
+    </div>
+
+    <div class="card" style="border-color:rgba(255,165,0,0.3);background:rgba(255,165,0,0.05);margin-top:12px">
+      <div class="card-title">⚙️ Firebase Config — صرف ایک بار</div>
+      <div style="font-size:12px;color:var(--text2);margin-bottom:10px;line-height:1.8">
+        اگر سنک کام نہ کرے تو اپنا <strong>apiKey</strong> اور <strong>appId</strong> یہاں ڈالیں:
+      </div>
+      <div class="form-group">
+        <label>apiKey (Firebase سے کاپی کریں)</label>
+        <input id="cfg-apikey" placeholder="AIzaSyC-..." style="font-family:var(--font-mono);font-size:12px">
+      </div>
+      <div class="form-group">
+        <label>appId</label>
+        <input id="cfg-appid" placeholder="1:130277560266:web:..." style="font-family:var(--font-mono);font-size:12px">
+      </div>
+      <button class="btn primary" onclick="saveFirebaseConfig()">💾 محفوظ کریں اور سنک کریں</button>
+      <div style="font-size:11px;color:var(--text3);margin-top:8px">
+        projectId: <code style="color:var(--gold)">kitabkhana-81879</code> ✅
+      </div>
+    </div>
+      <div class="card-title">📥 ایکسل سے امپورٹ</div>
+      <p style="font-size:12px;color:var(--text2);margin-bottom:12px;line-height:1.8">
+        کالم ترتیب: A=Book Number | B=Art & Sub Subtitle | C=Almari Number | D=Internal Number (خالی ہو تو خودکار KIT بنے گا) | E=Book Name | F=Volume | G=Author | H=Publisher
+      </p>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+        <label class="btn primary" style="cursor:pointer">
+          📂 ایکسل فائل منتخب کریں
+          <input type="file" accept=".xlsx,.xls" style="display:none" onchange="importExcel(this)">
+        </label>
+        <span id="importStatus" style="font-size:12px;color:var(--text2)"></span>
+      </div>
+      <div class="progress-bar" id="importProgress"><div class="progress-fill" id="importFill"></div></div>
+    </div>
+    <div class="card">
+      <div class="card-title">📤 ایکسل میں ایکسپورٹ</div>
+      <div class="btn-row" style="margin-top:0">
+        <button class="btn success" onclick="exportExcel()">📊 ایکسل ڈاؤنلوڈ کریں</button>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">💾 بیک اپ</div>
+      <div class="btn-row" style="margin-top:0">
+        <button class="btn info" onclick="backupData()">💾 بیک اپ بنائیں (JSON)</button>
+        <label class="btn" style="cursor:pointer">
+          📂 بیک اپ بحال کریں
+          <input type="file" accept=".json" style="display:none" onchange="restoreBackup(this)">
+        </label>
+      </div>
+    </div>
+    <div class="danger-zone">
+      <div class="danger-zone-title">⚠️ خطرناک زون</div>
+      <p style="font-size:12px;color:var(--text2);margin-bottom:10px">یہ عمل ناقابلِ واپسی ہے — پہلے بیک اپ لیں</p>
+      <div class="btn-row" style="margin-top:0">
+        <button class="btn danger" onclick="deleteAllBooks()">🗑 تمام کتابیں حذف کریں</button>
+        <button class="btn danger" onclick="deleteAllData()">💀 سمپورن ڈیٹا حذف کریں</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- HISTORY -->
+  <div class="section" id="sec-history">
+    <div class="search-bar">
+      <input id="histSearch" placeholder="کتاب، رکن، KIT نمبر سے تلاش..." oninput="renderHistory()">
+    </div>
+    <div class="card" style="padding:0;overflow:hidden">
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>KIT</th><th>کتاب</th><th>رکن</th><th>فون</th><th>اجراء</th><th>واپسی مقررہ</th><th>واپس ہوئی</th><th>حالت</th></tr></thead>
+          <tbody id="histBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- CATEGORIES -->
+  <div class="section" id="sec-categories">
+    <div class="card">
+      <div class="card-title">🏷 زمرہ جات منظم کریں
+        <span id="catTotalBadge" style="font-size:11px;font-weight:400;color:var(--text3);margin-right:auto;font-family:var(--font-mono)"></span>
+      </div>
+      <div class="cat-add-row">
+        <input id="newCatInput" placeholder="نیا زمرہ / فن لکھیں..." onkeydown="if(event.key==='Enter')addCategory()">
+        <button class="btn primary" onclick="addCategory()">+ شامل کریں</button>
+      </div>
+      <div id="catList" class="cat-list"></div>
+    </div>
+  </div>
+
+  </div><!-- /content -->
+</main>
+</div><!-- /app -->
+
+<!-- BOOK DETAIL MODAL -->
+<div class="modal-bg" id="detailModal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('detailModal')">✕</button>
+    <div class="modal-title" id="detailTitle">کتاب تفصیل</div>
+    <div id="detailBody"></div>
+  </div>
+</div>
+
+<!-- EDIT MODAL -->
+<div class="modal-bg" id="editModal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('editModal')">✕</button>
+    <div class="modal-title">کتاب ترمیم کریں</div>
+    <div class="form-grid">
+      <div class="form-group"><label>Book Number (A)</label><input id="e-bookNum"></div>
+      <div class="form-group"><label>Art & Sub Subtitle (B)</label><div style="display:flex;gap:6px"><select id="e-artSub" style="flex:1"></select></div></div>
+      <div class="form-group"><label>Almari Number (C)</label><input id="e-almari"></div>
+      <div class="form-group"><label>Internal Number (D)</label><input id="e-internal" readonly style="opacity:0.6"></div>
+      <div class="form-group"><label>کتاب کا نام (E)*</label><input id="e-name"></div>
+      <div class="form-group"><label>جلد (F)</label><input id="e-volume"></div>
+      <div class="form-group"><label>مصنف (G)</label><input id="e-author"></div>
+      <div class="form-group"><label>ناشر (H)</label><input id="e-pub"></div>
+    </div>
+    <input type="hidden" id="e-id">
+    <div class="btn-row">
+      <button class="btn primary" onclick="updateBook()">✅ محفوظ کریں</button>
+      <button class="btn" onclick="closeModal('editModal')">بند کریں</button>
+    </div>
+  </div>
+</div>
+
+  <!-- MEMBERS -->
+  <div class="section" id="sec-members">
+    <div class="card admin-only">
+      <div class="card-title">👥 اراکین — ID اور پاسورڈ</div>
+      <div style="font-size:12px;color:var(--text2);margin-bottom:12px;line-height:1.8">
+        جب کوئی کتاب جاری ہوتی ہے تو خودکار ممبر ID اور پاسورڈ بنتا ہے۔ یہاں تمام اراکین کی فہرست اور ان کی جاری کتابیں دیکھیں۔
+      </div>
+      <div id="membersList"></div>
+    </div>
+    <div class="card admin-only" style="margin-top:12px">
+      <div class="card-title">⚙️ پاسورڈ سیٹنگز</div>
+      <div class="form-group">
+        <label>ایڈمن پاسورڈ بدلیں</label>
+        <div style="display:flex;gap:8px">
+          <input type="password" id="newAdminPass" placeholder="نیا پاسورڈ" style="flex:1">
+          <button class="btn primary" onclick="changeAdminPass()">محفوظ</button>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Viewer پاسورڈ بدلیں</label>
+        <div style="display:flex;gap:8px">
+          <input type="password" id="newViewerPass" placeholder="نیا پاسورڈ" style="flex:1">
+          <button class="btn info" onclick="changeViewerPass()">محفوظ</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+<!-- CAMERA SCANNER MODAL -->
+<div class="modal-bg" id="cameraModal">
+  <div class="modal" style="max-width:420px;text-align:center">
+    <button class="modal-close" onclick="closeCameraScanner()">✕</button>
+    <div class="modal-title">📷 کیمرہ سے اسکین کریں</div>
+    <div style="font-size:12px;color:var(--text2);margin-bottom:12px">کتاب کا QR کوڈ یا بارکوڈ کیمرے کے سامنے رکھیں</div>
+    <div style="position:relative;display:inline-block;width:100%;max-width:320px">
+      <video id="scannerVideo" autoplay playsinline muted style="width:100%;border-radius:8px;background:#000;display:block"></video>
+      <canvas id="scannerCanvas" style="display:none"></canvas>
+      <div style="position:absolute;inset:0;pointer-events:none">
+        <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:200px;height:200px;border:2px solid var(--gold);border-radius:8px;box-shadow:0 0 0 1000px rgba(0,0,0,0.4)"></div>
+        <div id="scanLine" style="position:absolute;top:calc(50% - 100px);left:calc(50% - 100px);width:200px;height:2px;background:linear-gradient(90deg,transparent,var(--gold),transparent);animation:scanAnim 2s linear infinite"></div>
+      </div>
+    </div>
+    <style>@keyframes scanAnim{0%{transform:translateY(0)}50%{transform:translateY(198px)}100%{transform:translateY(0)}}</style>
+    <div id="cameraResult" style="margin-top:12px;font-size:14px;font-weight:600;min-height:24px;color:var(--gold)"></div>
+    <div class="btn-row" style="justify-content:center;margin-top:12px">
+      <button class="btn" onclick="closeCameraScanner()">بند کریں</button>
+      <button class="btn info" onclick="switchCamera()" id="switchCamBtn">🔄 کیمرہ بدلیں</button>
+    </div>
+  </div>
+</div>
+
+<!-- LIBRARY ID / CONNECT MODAL -->
+<div class="modal-bg" id="connectModal">
+  <div class="modal" style="max-width:460px">
+    <button class="modal-close" onclick="closeModal('connectModal')">✕</button>
+    <div class="modal-title">📱 Library ID سے جڑیں</div>
+    <div style="font-size:12px;color:var(--text2);margin-bottom:14px;line-height:1.8">
+      کسی اور لائبریری کا ریکارڈ دیکھنے کے لیے اس کی Library ID یہاں ڈالیں۔<br>
+      <span style="color:var(--red);font-size:11px">⚠️ موجودہ ڈیٹا محفوظ رہے گا مگر نئی ID سے سنک ہوگا</span>
+    </div>
+    <div class="form-group">
+      <label>Library ID</label>
+      <input id="connectIdInput" placeholder="مثال: LIB-ABC123" style="font-family:var(--font-mono);font-size:14px">
+    </div>
+    <div class="btn-row">
+      <button class="btn primary" onclick="applyNewLibId()">✅ جڑیں</button>
+      <button class="btn" onclick="closeModal('connectModal')">منسوخ</button>
+    </div>
+  </div>
+</div>
+
+<div class="print-area" id="printArea"></div>
+
+<script>
+// ===================== DATA =====================
+let books = [], transactions = [], counter = 0;
+let categories = [];
+
+const DEFAULT_CATEGORIES = [
+  'التخريج','التراجم والطبقات','السير والتاريخ','العقائد',
+  'العلل والموضوعات','الفتاوى','الفقه الحنبلي والمالكي',
+  'الفقه الحنفي وقواعدها','الفقه الشافعي وقواعدها',
+  'الفقه المقارن والعام','الفوائد الفقهية','اللغة العربية',
+  'القواعد','تفسير','درس کتابوں کی شروحات','شروح الحديث',
+  'علوم الحديث','علوم القرآن','غريب الحديث',
+  'فن تجويد وقراءات','كتب اللغة','كتب عامة','متون الحديث'
+];
+
+function loadData(){
+  try{
+    books = JSON.parse(localStorage.getItem('kb_books')||'[]');
+    transactions = JSON.parse(localStorage.getItem('kb_tx')||'[]');
+    counter = parseInt(localStorage.getItem('kb_ctr')||'0');
+    const saved = JSON.parse(localStorage.getItem('kb_cats')||'null');
+    categories = saved || [...DEFAULT_CATEGORIES];
+  }catch(e){books=[];transactions=[];counter=0;categories=[...DEFAULT_CATEGORIES];}
+}
+
+function saveData(){
+  try{
+    localStorage.setItem('kb_books', JSON.stringify(books));
+    localStorage.setItem('kb_tx', JSON.stringify(transactions));
+    localStorage.setItem('kb_ctr', String(counter));
+    localStorage.setItem('kb_cats', JSON.stringify(categories));
+    pendingSync = true;
+  }catch(e){}
+}
+
+function nextKIT(){
+  counter++;
+  saveData();
+  return 'KIT-'+String(counter).padStart(4,'0');
+}
+
+// ===================== LIBRARY ID & SYNC =====================
+const SYNC_INTERVAL = 30000; // 30 seconds
+let syncTimer = null;
+let pendingSync = false;
+let lastSyncTime = 0;
+let isSyncing = false;
+
+function getLibraryId(){
+  let id = localStorage.getItem('kb_lib_id');
+  if(!id){
+    // نئی منفرد ID بنائیں
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+    let r = 'LIB-';
+    for(let i=0;i<8;i++) r += chars[Math.floor(Math.random()*chars.length)];
+    id = r;
+    localStorage.setItem('kb_lib_id', id);
+  }
+  return id;
+}
+
+function updateLibIdDisplay(){
+  const id = getLibraryId();
+  const el = document.getElementById('libIdDisplay');
+  const code = document.getElementById('libIdCode');
+  const online = navigator.onLine;
+  if(el) el.textContent = (online ? '📡' : '📴') + ' ' + id.substring(0,12);
+  if(code) code.textContent = id;
+}
+
+function copyLibId(){
+  const id = getLibraryId();
+  navigator.clipboard.writeText(id).then(()=>{
+    alert2('Library ID کاپی ہوگئی: ' + id);
+  }).catch(()=>{
+    prompt('Library ID کاپی کریں:', id);
+  });
+}
+
+function changeLibId(){
+  openModal('connectModal');
+  const inp = document.getElementById('connectIdInput');
+  if(inp) inp.value = '';
+}
+
+function connectNewDevice(){
+  openModal('connectModal');
+  const inp = document.getElementById('connectIdInput');
+  if(inp) inp.value = '';
+}
+
+function showLibraryInfo(){
+  showSection('importExport');
+}
+
+function applyNewLibId(){
+  const inp = document.getElementById('connectIdInput');
+  const newId = inp ? inp.value.trim().toUpperCase() : '';
+  if(!newId){ alert2('Library ID درج کریں','error'); return; }
+  if(!confirm(`کیا Library ID کو "${newId}" پر تبدیل کریں؟\nموجودہ ڈیٹا محفوظ رہے گا اور نئی ID سے سنک ہوگا۔`)){ return; }
+  localStorage.setItem('kb_lib_id', newId);
+  updateLibIdDisplay();
+  closeModal('connectModal');
+  alert2(`Library ID بدل گئی: ${newId}`);
+  syncNow();
+}
+
+// Cloud sync using Firebase Firestore
+async function syncNow(){
+  if(isSyncing) return;
+  const online = navigator.onLine;
+  const libId = getLibraryId();
+  const syncBtn = document.getElementById('syncBtn');
+  const syncStatus = document.getElementById('syncStatus');
+
+  if(!online){
+    addSyncLog('📴 آف لائن — تبدیلیاں IndexedDB میں محفوظ ہیں، نیٹ ملنے پر سنک ہوگا');
+    if(syncStatus) syncStatus.textContent = '📴 آف لائن';
+    pendingSync = true;
+    return;
+  }
+
+  if(!window._firebaseReady){
+    addSyncLog('⏳ Firebase لوڈ ہو رہا ہے...');
+    if(syncStatus) syncStatus.textContent = '⏳ Firebase لوڈ...';
+    setTimeout(syncNow, 2000);
+    return;
+  }
+
+  isSyncing = true;
+  if(syncBtn){ syncBtn.textContent = '⏳ سنک...'; syncBtn.disabled = true; }
+  if(syncStatus) syncStatus.textContent = '⏳ سنک ہو رہا ہے...';
+  addSyncLog('🔄 Firebase سنک شروع — ' + new Date().toLocaleTimeString('ur-PK'));
+
+  try{
+    const db = window._firebaseDb;
+    const docRef = window._fsDoc(db, 'libraries', libId);
+
+    // پہلے cloud سے data پڑھیں
+    const cloudSnap = await window._fsGetDoc(docRef);
+    
+    if(cloudSnap.exists()){
+      const cloudData = cloudSnap.data();
+      const cloudTime = cloudData.lastModified || 0;
+      
+      if(cloudTime > lastSyncTime){
+        const cloudBooks = cloudData.books || [];
+        const cloudTx = cloudData.transactions || [];
+        
+        // merge — دونوں کا ڈیٹا ملائیں
+        const localOnlyBooks = books.filter(b => !cloudBooks.find(cb => cb.id === b.id));
+        const mergedBooks = [...cloudBooks, ...localOnlyBooks];
+        const mergedTx = [...new Map([...cloudTx, ...transactions].map(t=>[t.id,t])).values()];
+        
+        const added = localOnlyBooks.length + (cloudBooks.length - books.filter(b => cloudBooks.find(cb=>cb.id===b.id)).length);
+        
+        books = mergedBooks;
+        transactions = mergedTx;
+        if(cloudData.counter > counter) counter = cloudData.counter;
+        
+        // localStorage بھی اپڈیٹ
+        localStorage.setItem('kb_books', JSON.stringify(books));
+        localStorage.setItem('kb_tx', JSON.stringify(transactions));
+        localStorage.setItem('kb_ctr', String(counter));
+        
+        renderDashboard();
+        if(added > 0) addSyncLog(`📥 ${added} نئے ریکارڈ cloud سے ملے`);
+      }
+    }
+
+    // اب local data Firebase کو بھیجیں
+    await window._fsSetDoc(docRef, {
+      books, transactions, counter,
+      lastModified: Date.now(),
+      libId,
+      version: '3.0'
+    });
+
+    lastSyncTime = Date.now();
+    pendingSync = false;
+    
+    const timeStr = new Date().toLocaleTimeString('ur-PK');
+    addSyncLog(`✅ Firebase سنک مکمل — ${timeStr} — ${books.length} کتابیں`);
+    if(syncStatus) syncStatus.textContent = `✅ آخری سنک: ${timeStr}`;
+
+  }catch(err){
+    addSyncLog('❌ Firebase خطا: ' + err.message);
+    if(syncStatus) syncStatus.textContent = '❌ سنک ناکام';
+    if(err.message.includes('PLACEHOLDER')){
+      addSyncLog('⚠️ Firebase Config درست نہیں — نیچے دی گئی ہدایات دیکھیں');
+      if(syncStatus) syncStatus.innerHTML = '⚠️ <a href="#" onclick="showSection(\'importExport\')">Config ٹھیک کریں</a>';
+    }
+    pendingSync = true;
+  }
+
+  isSyncing = false;
+  if(syncBtn){ syncBtn.textContent = '🔄 سنک'; syncBtn.disabled = false; }
+  updateLibIdDisplay();
+}
+
+// Firebase ready ہونے پر سنک
+document.addEventListener('firebaseReady', ()=>{
+  addSyncLog('✅ Firebase جڑ گیا');
+  if(pendingSync || navigator.onLine) setTimeout(syncNow, 500);
+});
+function addSyncLog(msg){
+  const log = document.getElementById('syncLog');
+  if(!log) return;
+  const line = document.createElement('div');
+  line.textContent = msg;
+  log.appendChild(line);
+  log.scrollTop = log.scrollHeight;
+  // صرف آخری 20 لائنیں رکھیں
+  while(log.children.length > 20) log.removeChild(log.firstChild);
+}
+
+// آف لائن → آن لائن ہونے پر خودکار سنک
+window.addEventListener('online', ()=>{
+  updateLibIdDisplay();
+  if(pendingSync){
+    addSyncLog('🌐 نیٹ مل گیا — سنک ہو رہا ہے...');
+    setTimeout(syncNow, 1000);
+  }
+});
+window.addEventListener('offline', ()=>{
+  updateLibIdDisplay();
+  addSyncLog('📴 نیٹ گیا — آف لائن موڈ میں کام جاری ہے');
+});
+
+// ہر 2 منٹ بعد خودکار سنک
+function startAutoSync(){
+  if(syncTimer) clearInterval(syncTimer);
+  syncTimer = setInterval(()=>{
+    if(navigator.onLine) syncNow();
+  }, 120000);
+}
+
+// ===================== CAMERA BARCODE SCANNER =====================
+let scannerStream = null;
+let scannerAnimFrame = null;
+let scannerTarget = 'scan'; // 'scan', 'issue', 'return'
+let cameraFacingMode = 'environment'; // 'environment' = پچھلا کیمرہ
+
+function openCameraScanner(target){
+  scannerTarget = target;
+  document.getElementById('cameraResult').textContent = '';
+  openModal('cameraModal');
+  startScanner();
+}
+
+async function startScanner(){
+  stopScanner();
+  const video = document.getElementById('scannerVideo');
+  const result = document.getElementById('cameraResult');
+  result.textContent = 'کیمرہ شروع ہو رہا ہے...';
+  
+  try{
+    scannerStream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: cameraFacingMode, width:{ideal:1280}, height:{ideal:720} }
+    });
+    video.srcObject = scannerStream;
+    video.onloadedmetadata = ()=>{
+      video.play();
+      result.textContent = 'QR / بارکوڈ کیمرے کے سامنے رکھیں...';
+      scanFrame();
+    };
+  }catch(err){
+    result.textContent = '❌ کیمرہ نہیں کھل سکا: ' + err.message;
+    result.style.color = 'var(--red)';
+  }
+}
+
+function scanFrame(){
+  const video = document.getElementById('scannerVideo');
+  const canvas = document.getElementById('scannerCanvas');
+  if(!video || !canvas || !scannerStream) return;
+  
+  if(video.readyState === video.HAVE_ENOUGH_DATA){
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    
+    try{
+      const code = jsQR(imageData.data, imageData.width, imageData.height, {
+        inversionAttempts: 'dontInvert'
+      });
+      if(code){
+        const val = code.data.trim().toUpperCase();
+        handleScanResult(val);
+        return;
+      }
+    }catch(e){}
+  }
+  scannerAnimFrame = requestAnimationFrame(scanFrame);
+}
+
+function handleScanResult(val){
+  const result = document.getElementById('cameraResult');
+  result.textContent = '✅ ملا: ' + val;
+  result.style.color = 'var(--green)';
+  
+  // vibrate on mobile
+  if(navigator.vibrate) navigator.vibrate(200);
+  
+  setTimeout(()=>{
+    closeCameraScanner();
+    // target پر بھیجیں
+    if(scannerTarget === 'scan'){
+      document.getElementById('scanInput').value = val;
+      doScan();
+    } else if(scannerTarget === 'issue'){
+      document.getElementById('i-kit').value = val;
+      lookupIssue();
+    } else if(scannerTarget === 'return'){
+      document.getElementById('r-kit').value = val;
+      lookupReturn();
+    }
+  }, 800);
+}
+
+function stopScanner(){
+  if(scannerAnimFrame){ cancelAnimationFrame(scannerAnimFrame); scannerAnimFrame = null; }
+  if(scannerStream){ scannerStream.getTracks().forEach(t=>t.stop()); scannerStream = null; }
+}
+
+function closeCameraScanner(){
+  stopScanner();
+  closeModal('cameraModal');
+}
+
+function switchCamera(){
+  cameraFacingMode = cameraFacingMode === 'environment' ? 'user' : 'environment';
+  startScanner();
+}
+
+// modal بند ہونے پر کیمرہ بھی بند کریں
+document.getElementById('cameraModal').addEventListener('click', function(e){
+  if(e.target === this) closeCameraScanner();
+});
+
+
+const pageTitles = {
+  dashboard:'ڈیش بورڈ', books:'تمام کتابیں', add:'کتاب شامل کریں',
+  issue:'کتاب جاری کریں', returnBook:'کتاب واپسی',
+  qrprint:'QR کوڈ پرنٹ', importExport:'امپورٹ / ایکسپورٹ',
+  history:'تاریخ', categories:'زمرہ جات'
+};
+
+// ===================== AUTH SYSTEM =====================
+const DEFAULT_ADMIN_PASS = 'admin123';
+const DEFAULT_VIEWER_PASS = 'view123';
+let currentRole = null; // 'admin' | 'viewer' | 'member'
+let currentMemberId = null;
+let selectedLoginRole = 'admin';
+
+function getAdminPass(){ return localStorage.getItem('kb_admin_pass') || DEFAULT_ADMIN_PASS; }
+function getViewerPass(){ return localStorage.getItem('kb_viewer_pass') || DEFAULT_VIEWER_PASS; }
+
+function selectRole(role){
+  selectedLoginRole = role;
+  ['admin','viewer','member'].forEach(r=>{
+    document.getElementById('tab-'+r)?.classList.toggle('active', r===role);
+    const f = document.getElementById('login-'+r+'-fields');
+    if(f) f.style.display = r===role ? '' : 'none';
+  });
+  document.getElementById('loginErr').textContent = '';
+}
+
+function doLogin(){
+  const err = document.getElementById('loginErr');
+  err.textContent = '';
+
+  if(selectedLoginRole === 'admin'){
+    const pass = document.getElementById('adminPass').value;
+    if(pass === getAdminPass()){
+      enterSystem('admin');
+    } else {
+      err.textContent = '❌ پاسورڈ غلط ہے';
+    }
+  }
+  else if(selectedLoginRole === 'viewer'){
+    const pass = document.getElementById('viewerPass').value;
+    if(pass === getViewerPass()){
+      enterSystem('viewer');
+    } else {
+      err.textContent = '❌ پاسورڈ غلط ہے';
+    }
+  }
+  else if(selectedLoginRole === 'member'){
+    const memberId = document.getElementById('memberIdInp').value.trim().toUpperCase();
+    const pass = document.getElementById('memberPassInp').value;
+    const member = getMembers().find(m => m.memberId === memberId);
+    if(!member){ err.textContent = '❌ ID نہیں ملی'; return; }
+    if(member.password !== pass){ err.textContent = '❌ پاسورڈ غلط'; return; }
+    currentRole = 'member';
+    currentMemberId = memberId;
+    document.getElementById('loginScreen').style.display = 'none';
+    showMemberPortal(member);
+  }
+}
+
+function enterSystem(role){
+  currentRole = role;
+  document.getElementById('loginScreen').style.display = 'none';
+  document.body.classList.toggle('role-viewer', role === 'viewer');
+  const badge = document.getElementById('viewerBadge');
+  if(badge) badge.style.display = role === 'viewer' ? 'block' : 'none';
+  const roleBadge = document.getElementById('currentRoleBadge');
+  if(roleBadge) roleBadge.textContent = role === 'admin' ? '🔐 ایڈمن' : '👁 ویوور';
+  // auto-sync for admin
+  if(role === 'admin' && navigator.onLine) setTimeout(syncNow, 1500);
+}
+
+function doLogout(){
+  currentRole = null;
+  currentMemberId = null;
+  document.body.classList.remove('role-viewer');
+  document.getElementById('viewerBadge').style.display = 'none';
+  document.getElementById('adminPass').value = '';
+  document.getElementById('viewerPass').value = '';
+  document.getElementById('loginScreen').style.display = 'flex';
+}
+
+function logoutPortal(){
+  document.getElementById('memberPortal').style.display = 'none';
+  document.getElementById('loginScreen').style.display = 'flex';
+  document.getElementById('memberIdInp').value = '';
+  document.getElementById('memberPassInp').value = '';
+  currentRole = null; currentMemberId = null;
+}
+
+// ===================== MEMBER ID SYSTEM =====================
+function getMembers(){
+  try { return JSON.parse(localStorage.getItem('kb_members') || '[]'); } catch(e){ return []; }
+}
+function saveMembers(members){
+  localStorage.setItem('kb_members', JSON.stringify(members));
+}
+
+function generateMemberId(){
+  const members = getMembers();
+  const num = (members.length + 1).toString().padStart(5, '0');
+  return 'MBR-' + num;
+}
+
+function generateMemberPassword(){
+  const chars = 'abcdefghjkmnpqrstuvwxyz23456789';
+  let pass = '';
+  for(let i=0;i<6;i++) pass += chars[Math.floor(Math.random()*chars.length)];
+  return pass;
+}
+
+function getOrCreateMember(name, phone){
+  const members = getMembers();
+  // نام سے موجودہ ممبر تلاش کریں
+  let member = members.find(m => m.name.trim().toLowerCase() === name.trim().toLowerCase());
+  if(!member){
+    member = {
+      memberId: generateMemberId(),
+      name: name.trim(),
+      phone: phone || '',
+      password: generateMemberPassword(),
+      createdDate: new Date().toLocaleDateString('ur-PK')
+    };
+    members.push(member);
+    saveMembers(members);
+  }
+  return member;
+}
+
+function showMemberPortal(member){
+  const portal = document.getElementById('memberPortal');
+  portal.style.display = 'block';
+  document.getElementById('portalMemberName').textContent = '👤 ' + member.name;
+  document.getElementById('portalMemberId').textContent = member.memberId;
+
+  const myBooks = transactions.filter(t => {
+    const m = getMembers().find(mb => mb.memberId === member.memberId);
+    return m && t.member.trim().toLowerCase() === m.name.trim().toLowerCase() && t.status === 'issued';
+  });
+
+  const container = document.getElementById('portalBooks');
+  if(!myBooks.length){
+    container.innerHTML = '<div style="text-align:center;color:var(--text3);padding:40px;font-size:14px">📭 ابھی کوئی کتاب جاری نہیں</div>';
+    return;
+  }
+
+  const today = new Date();
+  container.innerHTML = myBooks.map(t => {
+    const dueDate = t.due ? new Date(t.due) : null;
+    const isOverdue = dueDate && dueDate < today;
+    return `<div class="book-card">
+      <div class="book-card-name">📖 ${t.bookName}</div>
+      <div class="book-card-meta">
+        <span>🔖 ${t.kit}</span>
+        <span>📅 جاری: ${t.issued}</span>
+        ${t.due ? `<span class="${isOverdue?'overdue-tag':''}">⏰ واپسی: ${t.due}${isOverdue?' ⚠️ مدت گزر گئی':''}</span>` : ''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function renderMembersList(){
+  const container = document.getElementById('membersList');
+  if(!container) return;
+  const members = getMembers();
+  if(!members.length){
+    container.innerHTML = '<div class="empty">ابھی کوئی ممبر نہیں — کتاب جاری کریں تو خودکار بنے گا</div>';
+    return;
+  }
+  container.innerHTML = members.map(m => {
+    const active = transactions.filter(t => t.member.trim().toLowerCase() === m.name.trim().toLowerCase() && t.status === 'issued');
+    return `<div style="background:var(--bg3);border-radius:10px;padding:14px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
+      <div>
+        <div style="font-weight:600;font-size:14px">👤 ${m.name}</div>
+        <div style="font-size:11px;color:var(--text3);font-family:var(--font-mono);margin-top:3px">ID: <strong style="color:var(--gold)">${m.memberId}</strong> | پاسورڈ: <strong>${m.password}</strong></div>
+        ${m.phone ? `<div style="font-size:11px;color:var(--text3)">📞 ${m.phone}</div>` : ''}
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px">
+        <span class="badge ${active.length?'issued':'avail'}">${active.length} کتاب جاری</span>
+        <button class="btn sm info" onclick="copyMemberCreds('${m.memberId}','${m.name}','${m.password}')" style="font-size:10px">📋 کاپی</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function copyMemberCreds(id, name, pass){
+  const text = `کتب خانہ — ممبر لاگ ان\nنام: ${name}\nID: ${id}\nپاسورڈ: ${pass}`;
+  navigator.clipboard.writeText(text).then(()=>alert2('کاپی ہوگئی!')).catch(()=>prompt('کاپی کریں:',text));
+}
+
+function changeAdminPass(){
+  const inp = document.getElementById('newAdminPass');
+  const pass = inp.value.trim();
+  if(pass.length < 4){ alert2('کم از کم 4 حروف','error'); return; }
+  localStorage.setItem('kb_admin_pass', pass);
+  inp.value = '';
+  alert2('ایڈمن پاسورڈ محفوظ ✅');
+}
+
+function changeViewerPass(){
+  const inp = document.getElementById('newViewerPass');
+  const pass = inp.value.trim();
+  if(pass.length < 4){ alert2('کم از کم 4 حروف','error'); return; }
+  localStorage.setItem('kb_viewer_pass', pass);
+  inp.value = '';
+  alert2('Viewer پاسورڈ محفوظ ✅');
+}
+
+function saveFirebaseConfig(){
+  const apiKey = document.getElementById('cfg-apikey').value.trim();
+  const appId = document.getElementById('cfg-appid').value.trim();
+  if(!apiKey || !appId){ alert2('apiKey اور appId دونوں درج کریں','error'); return; }
+  localStorage.setItem('kb_fb_apikey', apiKey);
+  localStorage.setItem('kb_fb_appid', appId);
+  alert2('Config محفوظ ہوگئی — صفحہ دوبارہ لوڈ ہوگا...');
+  setTimeout(()=>location.reload(), 1500);
+}
+
+function showSection(key){
+  // viewer کے لیے admin-only sections بلاک کریں
+  const adminSections = ['add','issue','returnBook','qrprint','importExport','history','categories','members'];
+  if(currentRole === 'viewer' && adminSections.includes(key)){
+    alert2('👁 ویوور موڈ میں یہ سیکشن نہیں کھل سکتا','error');
+    return;
+  }
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  const sec = document.getElementById('sec-'+key);
+  if(sec) sec.classList.add('active');
+  document.getElementById('pageTitle').textContent = pageTitles[key]||key;
+  // highlight nav
+  document.querySelectorAll('.nav-item').forEach(n=>{
+    if(n.textContent.trim().includes(pageTitles[key]?.substring(0,4)||key)) n.classList.add('active');
+  });
+  closeSidebar();
+  if(key==='dashboard') renderDashboard();
+  if(key==='books') renderBooksTable();
+  if(key==='returnBook') renderReturnHistory();
+  if(key==='history') renderHistory();
+  if(key==='add') refreshKIT();
+  if(key==='categories') renderCategories();
+  if(key==='members') renderMembersList();
+}
+
+function toggleSidebar(){
+  document.getElementById('sidebar').classList.toggle('open');
+  document.getElementById('sidebarOverlay').classList.toggle('open');
+}
+function closeSidebar(){
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('sidebarOverlay').classList.remove('open');
+}
+
+// ALERT
+function alert2(msg, type='success'){
+  const wrap = document.getElementById('alertWrap');
+  const el = document.createElement('div');
+  el.className = 'alert '+type;
+  el.textContent = msg;
+  wrap.appendChild(el);
+  setTimeout(()=>el.remove(), 3500);
+}
+
+// MODAL
+function closeModal(id){ document.getElementById(id).classList.remove('open'); }
+function openModal(id){ document.getElementById(id).classList.add('open'); }
+
+// ===================== DASHBOARD =====================
+function renderDashboard(){
+  const total = books.length;
+  const avail = books.filter(b=>b.status==='available').length;
+  const issued = books.filter(b=>b.status==='issued').length;
+  const members = [...new Set(transactions.filter(t=>t.status==='issued').map(t=>t.member))].length;
+  document.getElementById('st-total').textContent = total;
+  document.getElementById('st-avail').textContent = avail;
+  document.getElementById('st-issued').textContent = issued;
+  document.getElementById('st-members').textContent = members;
+  document.getElementById('sb-total').textContent = total;
+
+  const recentTx = transactions.filter(t=>t.status==='issued').slice(-6).reverse();
+  const el = document.getElementById('recentIssues');
+  if(!recentTx.length){ el.innerHTML='<div class="empty">ابھی کوئی اجراء نہیں</div>'; return; }
+  el.innerHTML = `<div class="table-wrap"><table>
+    <thead><tr><th>KIT</th><th>کتاب</th><th>رکن</th><th>تاریخ</th><th>واپسی</th></tr></thead>
+    <tbody>${recentTx.map(t=>`<tr>
+      <td style="font-family:var(--font-mono);font-size:11px">${t.kit}</td>
+      <td>${t.bookName}</td><td>${t.member}</td><td>${t.issued}</td>
+      <td style="color:var(--orange)">${t.due||'—'}</td>
+    </tr>`).join('')}</tbody>
+  </table></div>`;
+}
+
+// SCAN
+function doScan(){
+  const val = document.getElementById('scanInput').value.trim().toUpperCase();
+  const el = document.getElementById('scanResult');
+  const book = books.find(b=>b.internal===val||b.bookNum===val);
+  if(!book){ el.innerHTML=`<span style="color:var(--red)">❌ نہیں ملی: ${val}</span>`; return; }
+  const st = book.status==='available';
+  el.innerHTML = `<div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-top:4px">
+    <span style="color:${st?'var(--green)':'var(--red)'}">${st?'✅ دستیاب':'📤 جاری شدہ'}</span>
+    <strong>${book.name}</strong>
+    <span style="color:var(--text2)">${book.author} | جلد: ${book.volume||'—'}</span>
+    <span style="font-family:var(--font-mono);font-size:11px;color:var(--gold)">${book.internal}</span>
+    ${st
+      ? `<button class="btn sm success" onclick="prefillIssue('${book.internal}')">جاری کریں</button>`
+      : `<button class="btn sm danger" onclick="prefillReturn('${book.internal}')">واپسی</button>`}
+  </div>`;
+  document.getElementById('scanInput').value='';
+}
+
+function prefillIssue(kit){ showSection('issue'); setTimeout(()=>{ document.getElementById('i-kit').value=kit; lookupIssue(); },100); }
+function prefillReturn(kit){ showSection('returnBook'); setTimeout(()=>{ document.getElementById('r-kit').value=kit; lookupReturn(); },100); }
+
+// ===================== ARABIC/URDU NORMALIZATION =====================
+function normalizeText(str){
+  if(!str) return '';
+  return str
+    // الف کی تمام شکلیں → ا
+    .replace(/[أإآٱٲٳٵ]/g, 'ا')
+    // ہ / ه / ھ سب ایک کریں (گول ہے، عربی ہے، دو چشمی ہے)
+    .replace(/[هةہھ\u06BE\u06C1\u06C3]/g, 'ہ')
+    // ی کی تمام شکلیں → ی
+    .replace(/[يىیے\u06CC\u06CD]/g, 'ی')
+    // ک کی عربی شکل → ک
+    .replace(/[ك\u06A9]/g, 'ک')
+    // واؤ کی شکلیں
+    .replace(/[ؤ]/g, 'و')
+    // ن غنہ → ن
+    .replace(/[\u06BA]/g, 'ن')
+    // تشدید و حرکات ہٹائیں (اعراب + مد + تنوین)
+    .replace(/[\u064B-\u065F\u0670\u0671]/g, '')
+    // لام الف
+    .replace(/[لا]/g, 'لا')
+    .toLowerCase();
+}
+
+// ===================== BOOKS TABLE (PAGINATED) =====================
+let booksPage = 0;
+const PAGE_SIZE = 50;
+let filteredBooks = [];
+
+function searchBooks(){
+  booksPage = 0;
+  renderBooksTable();
+}
+
+function renderBooksTable(){
+  const raw = (document.getElementById('bookSearch')?.value||'');
+  const q = normalizeText(raw);
+  const st = document.getElementById('bookFilter')?.value||'';
+  const cat = document.getElementById('bookCatFilter')?.value||'';
+  const catN = normalizeText(cat);
+  filteredBooks = books.filter(b=>{
+    const haystack = normalizeText([b.name,b.author,b.internal,b.bookNum,b.publisher,b.category||''].join(' '));
+    const match = !q || haystack.includes(q);
+    const stm = !st || b.status===st;
+    const catm = !cat || normalizeText(b.category||'')===catN || normalizeText(b.artSub||'')===catN;
+    return match && stm && catm;
+  });
+  const body = document.getElementById('booksBody');
+  const empty = document.getElementById('booksEmpty');
+  const countBar = document.getElementById('booksCountBar');
+  if(!filteredBooks.length){ body.innerHTML=''; empty.style.display='block'; countBar.textContent=''; renderPagination(); return; }
+  empty.style.display='none';
+  const totalPages = Math.ceil(filteredBooks.length / PAGE_SIZE);
+  if(booksPage >= totalPages) booksPage = totalPages - 1;
+  const start = booksPage * PAGE_SIZE;
+  const pageBooks = filteredBooks.slice(start, start + PAGE_SIZE);
+  countBar.textContent = `کل: ${filteredBooks.length} کتابیں${cat?' | زمرہ: '+cat:''} | دکھا رہے ہیں: ${start+1}–${Math.min(start+PAGE_SIZE, filteredBooks.length)}`;
+  body.innerHTML = pageBooks.map(b=>`<tr>
+    <td style="font-family:var(--font-mono);font-size:11px">${b.bookNum||'—'}</td>
+    <td style="font-size:12px;color:var(--text2)">${b.artSub||'<span style="opacity:0.4">خالی</span>'}</td>
+    <td>${b.almari||'—'}</td>
+    <td style="font-family:var(--font-mono);font-size:12px;color:var(--gold);font-weight:600">${b.internal}</td>
+    <td style="font-weight:500">${b.name}</td>
+    <td>${b.volume||'—'}</td>
+    <td>${b.author||'—'}</td>
+    <td style="font-size:12px">${b.publisher||'—'}</td>
+    <td><span class="badge ${b.status==='available'?'avail':'issued'}">${b.status==='available'?'دستیاب':'جاری'}</span></td>
+    <td>
+      <div style="display:flex;gap:4px">
+        <button class="btn sm" onclick="editBook(${b.id})">✏️</button>
+        <button class="btn sm info" onclick="showQRSingle(${b.id})">QR</button>
+        <button class="btn sm danger" onclick="deleteBook(${b.id})">🗑</button>
+      </div>
+    </td>
+  </tr>`).join('');
+  renderPagination();
+}
+
+function renderPagination(){
+  const pag = document.getElementById('booksPagination');
+  if(!pag) return;
+  const totalPages = Math.ceil(filteredBooks.length / PAGE_SIZE);
+  if(totalPages <= 1){ pag.innerHTML=''; return; }
+  let html = `<button class="pag-btn" onclick="changePage(${booksPage-1})" ${booksPage===0?'disabled':''}>◀ پچھلا</button>`;
+  const range = 2;
+  for(let i=0;i<totalPages;i++){
+    if(i===0||i===totalPages-1||Math.abs(i-booksPage)<=range){
+      html+=`<button class="pag-btn ${i===booksPage?'active':''}" onclick="changePage(${i})">${i+1}</button>`;
+    } else if(Math.abs(i-booksPage)===range+1){
+      html+=`<span style="color:var(--text3);padding:0 4px">…</span>`;
+    }
+  }
+  html+=`<button class="pag-btn" onclick="changePage(${booksPage+1})" ${booksPage===totalPages-1?'disabled':''}>اگلا ▶</button>`;
+  html+=`<span class="pag-info">صفحہ ${booksPage+1} / ${totalPages}</span>`;
+  pag.innerHTML = html;
+}
+
+function changePage(p){
+  const totalPages = Math.ceil(filteredBooks.length / PAGE_SIZE);
+  if(p<0||p>=totalPages) return;
+  booksPage = p;
+  renderBooksTable();
+  document.getElementById('sec-books').scrollTo({top:0,behavior:'smooth'});
+}
+
+function deleteBook(id){
+  if(!confirm('کیا واقعی حذف کریں؟')) return;
+  books = books.filter(b=>b.id!==id);
+  saveData(); renderBooksTable(); renderDashboard();
+  alert2('کتاب حذف ہوگئی','error');
+}
+
+function deleteAllBooks(){
+  const issuedCount = books.filter(b=>b.status==='issued').length;
+  let msg = `کیا واقعی تمام ${books.length} کتابیں حذف کریں؟`;
+  if(issuedCount>0) msg += `\n⚠️ ${issuedCount} کتابیں ابھی جاری ہیں!`;
+  msg += '\n\nیہ عمل ناقابلِ واپسی ہے۔ پہلے بیک اپ لیں!';
+  if(!confirm(msg)) return;
+  const confirmWord = prompt('تصدیق کے لیے "حذف" لکھیں:');
+  if(confirmWord !== 'حذف'){ alert2('منسوخ — تصدیح نہیں ہوئی'); return; }
+  books = [];
+  transactions = [];
+  saveData(); renderBooksTable(); renderDashboard(); renderReturnHistory(); renderHistory();
+  alert2(`تمام کتابیں اور تاریخ حذف ہوگئی`,'error');
+}
+
+function deleteAllData(){
+  if(!confirm('کیا واقعی سارا ڈیٹا (کتابیں + تاریخ) حذف کریں؟\nیہ عمل ناقابلِ واپسی ہے!')) return;
+  const confirmWord = prompt('تصدیق کے لیے "سب حذف" لکھیں:');
+  if(confirmWord !== 'سب حذف'){ alert2('منسوخ'); return; }
+  books=[]; transactions=[]; counter=0;
+  saveData(); renderBooksTable(); renderDashboard();
+  alert2('سمپورن ڈیٹا حذف ہوگیا','error');
+}
+
+// ===================== THEME =====================
+function toggleTheme(){
+  const isDay = document.body.classList.toggle('day-mode');
+  localStorage.setItem('kb_theme', isDay?'day':'dark');
+  document.getElementById('themeBtn').textContent = isDay ? '🌙 ڈارک موڈ' : '☀️ ڈے موڈ';
+}
+
+function applyTheme(){
+  const saved = localStorage.getItem('kb_theme');
+  if(saved==='day'){
+    document.body.classList.add('day-mode');
+    const btn = document.getElementById('themeBtn');
+    if(btn) btn.textContent='🌙 ڈارک موڈ';
+  }
+}
+
+// ===================== CATEGORIES =====================
+function populateCatSelects(selectedVal){
+  // book add/edit form selects — artSub now uses categories list
+  ['f-artSub','e-artSub'].forEach(id=>{
+    const sel = document.getElementById(id);
+    if(!sel) return;
+    const cur = selectedVal !== undefined ? selectedVal : sel.value;
+    sel.innerHTML = `<option value="">— بعد میں بھریں —</option>` + categories.map(c=>`<option value="${c}" ${c===cur?'selected':''}>${c}</option>`).join('');
+  });
+  // category filter in books list — categories + unique artSub values from books
+  const catFilter = document.getElementById('bookCatFilter');
+  if(catFilter){
+    const cur = catFilter.value;
+    // collect all unique values from categories list AND books' category/artSub
+    const fromBooks = [...new Set(books.map(b=>b.category||b.artSub||'').filter(Boolean))];
+    const allCats = [...new Set([...categories, ...fromBooks])].sort();
+    catFilter.innerHTML = `<option value="">سب زمرے</option>` +
+      allCats.map(c=>`<option value="${c}" ${c===cur?'selected':''}>${c}</option>`).join('');
+  }
+}
+
+function renderCategories(){
+  const list = document.getElementById('catList');
+  const badge = document.getElementById('catTotalBadge');
+  if(badge) badge.textContent = `(${categories.length} زمرے)`;
+  if(!categories.length){
+    list.innerHTML='<div class="empty">کوئی زمرہ نہیں — اوپر سے شامل کریں</div>';
+    return;
+  }
+  list.innerHTML = categories.map((cat,i)=>{
+    const usedCount = books.filter(b=>b.category===cat).length;
+    return `<div class="cat-item" id="cat-row-${i}">
+      <span class="cat-name" id="cat-name-${i}">${cat}</span>
+      <span class="cat-count">${usedCount} کتاب</span>
+      <button class="btn sm success" onclick="viewCatBooks('${cat.replace(/'/g,"\\'")}',event)" title="اس زمرے کی کتابیں دیکھیں">📚</button>
+      <button class="btn sm info" onclick="startEditCat(${i})" title="ترمیم">✏️</button>
+      <button class="btn sm danger" onclick="deleteCat(${i})" title="حذف" ${usedCount>0?`style="opacity:0.5" title='پہلے کتابوں کا زمرہ بدلیں'`:''}>🗑</button>
+    </div>`;
+  }).join('');
+}
+
+function startEditCat(i){
+  // inline edit
+  const row = document.getElementById(`cat-row-${i}`);
+  const nameSpan = document.getElementById(`cat-name-${i}`);
+  const oldVal = categories[i];
+  nameSpan.outerHTML = `<input class="cat-edit-input" id="cat-edit-inp-${i}" value="${oldVal}" onkeydown="if(event.key==='Enter')saveCat(${i});if(event.key==='Escape')renderCategories()">`;
+  const editBtns = row.querySelectorAll('button');
+  editBtns[0].textContent='✅';
+  editBtns[0].onclick = ()=>saveCat(i);
+  editBtns[1].textContent='❌';
+  editBtns[1].onclick = ()=>renderCategories();
+  setTimeout(()=>{ const inp=document.getElementById(`cat-edit-inp-${i}`); if(inp){inp.focus();inp.select();} },50);
+}
+
+function saveCat(i){
+  const inp = document.getElementById(`cat-edit-inp-${i}`);
+  if(!inp) return;
+  const newVal = inp.value.trim();
+  if(!newVal){ alert2('زمرہ خالی نہیں ہوسکتا','error'); return; }
+  if(categories.includes(newVal) && categories[i]!==newVal){ alert2('یہ زمرہ پہلے سے موجود ہے','error'); return; }
+  const oldVal = categories[i];
+  categories[i] = newVal;
+  // update all books using old category name
+  books.forEach(b=>{ if(b.category===oldVal) b.category=newVal; });
+  saveData();
+  populateCatSelects();
+  renderCategories();
+  alert2(`زمرہ اپڈیٹ: ${newVal}`);
+}
+
+function viewCatBooks(catName, e){
+  if(e) e.stopPropagation();
+  showSection('books');
+  setTimeout(()=>{
+    const sel = document.getElementById('bookCatFilter');
+    if(sel){
+      // find exact option value (may differ in script from display)
+      const match = Array.from(sel.options).find(o=>normalizeText(o.value)===normalizeText(catName));
+      sel.value = match ? match.value : catName;
+    }
+    searchBooks();
+  }, 80);
+}
+
+function addCategory(){
+  const inp = document.getElementById('newCatInput');
+  const val = inp.value.trim();
+  if(!val){ alert2('زمرہ کا نام لکھیں','error'); return; }
+  if(categories.includes(val)){ alert2('یہ زمرہ پہلے سے موجود ہے','error'); return; }
+  categories.push(val);
+  saveData();
+  populateCatSelects(val);
+  inp.value='';
+  renderCategories();
+  alert2(`✅ زمرہ شامل: ${val}`);
+}
+
+function deleteCat(i){
+  const cat = categories[i];
+  const usedCount = books.filter(b=>b.category===cat).length;
+  if(usedCount>0){
+    alert2(`${usedCount} کتابیں اس زمرے میں ہیں — پہلے انہیں دوسرے زمرے میں منتقل کریں`,'error');
+    return;
+  }
+  if(!confirm(`"${cat}" زمرہ حذف کریں؟`)) return;
+  categories.splice(i,1);
+  saveData();
+  populateCatSelects();
+  renderCategories();
+  alert2(`زمرہ حذف: ${cat}`,'error');
+}
+
+function editBook(id){
+  const b = books.find(x=>x.id===id);
+  if(!b) return;
+  document.getElementById('e-id').value=id;
+  document.getElementById('e-bookNum').value=b.bookNum||'';
+  document.getElementById('e-almari').value=b.almari||'';
+  document.getElementById('e-internal').value=b.internal||'';
+  document.getElementById('e-name').value=b.name||'';
+  document.getElementById('e-volume').value=b.volume||'';
+  document.getElementById('e-author').value=b.author||'';
+  document.getElementById('e-pub').value=b.publisher||'';
+  populateCatSelects(b.artSub||b.category||'');
+  openModal('editModal');
+}
+
+function updateBook(){
+  const id = parseInt(document.getElementById('e-id').value);
+  const b = books.find(x=>x.id===id);
+  if(!b) return;
+  b.bookNum=document.getElementById('e-bookNum').value.trim();
+  const artSubVal=document.getElementById('e-artSub').value;
+  b.artSub=artSubVal;
+  b.category=artSubVal||b.category;
+  b.almari=document.getElementById('e-almari').value.trim();
+  b.name=document.getElementById('e-name').value.trim();
+  b.volume=document.getElementById('e-volume').value.trim();
+  b.author=document.getElementById('e-author').value.trim();
+  b.publisher=document.getElementById('e-pub').value.trim();
+  saveData(); closeModal('editModal'); renderBooksTable();
+  alert2('کتاب اپڈیٹ ہوگئی');
+}
+
+// ===================== ADD BOOK =====================
+// ہر فن کا اگلا سیریل نمبر
+function getNextBookNumForArt(artSub){
+  if(!artSub) return '';
+  const norm = normalizeText(artSub);
+  const count = books.filter(b => normalizeText(b.artSub||'') === norm).length;
+  return String(count + 1);
+}
+
+// Art & Sub Subtitle تبدیل ہونے پر Book Number خودکار اپڈیٹ
+function onArtSubChange(){
+  const artSub = document.getElementById('f-artSub').value;
+  const bn = document.getElementById('f-bookNum');
+  if(bn){ bn.value = getNextBookNumForArt(artSub); }
+}
+
+function refreshKIT(){
+  const el = document.getElementById('f-internal');
+  if(el){ el.value='KIT-'+String(counter+1).padStart(4,'0'); }
+  const artSub = document.getElementById('f-artSub')?.value || '';
+  const bn = document.getElementById('f-bookNum');
+  if(bn){ bn.value = getNextBookNumForArt(artSub); }
+}
+
+function clearForm(){
+  ['f-almari','f-name','f-volume','f-author','f-pub','f-year'].forEach(id=>{
+    const el=document.getElementById(id); if(el) el.value='';
+  });
+  const artSub = document.getElementById('f-artSub');
+  if(artSub) artSub.value='';
+  refreshKIT();
+}
+
+function saveBook(){
+  const name = document.getElementById('f-name').value.trim();
+  if(!name){ alert2('کتاب کا نام لازمی ہے','error'); return; }
+  const artSubRaw = document.getElementById('f-artSub').value;
+  // categories کی exact spelling سے match کریں
+  const normRaw = normalizeText(artSubRaw);
+  const artSubVal = categories.find(c => normalizeText(c) === normRaw) || artSubRaw;
+  const book = {
+    id: Date.now(),
+    bookNum: document.getElementById('f-bookNum').value.trim() || getNextBookNumForArt(artSubVal),
+    artSub: artSubVal,
+    almari: document.getElementById('f-almari').value.trim(),
+    internal: nextKIT(),
+    name,
+    volume: document.getElementById('f-volume').value.trim(),
+    author: document.getElementById('f-author').value.trim(),
+    publisher: document.getElementById('f-pub').value.trim(),
+    category: artSubVal || 'دیگر',
+    year: document.getElementById('f-year').value.trim(),
+    status: 'available',
+    addedDate: new Date().toLocaleDateString('ur-PK')
+  };
+  books.push(book);
+  saveData(); clearForm(); renderDashboard();
+  alert2(`✅ کتاب شامل: ${book.internal}`);
+  setTimeout(()=>showQRSingle(book.id), 500);
+}
+
+// ===================== ISSUE =====================
+function lookupIssue(){
+  const val = document.getElementById('i-kit').value.trim().toUpperCase();
+  const el = document.getElementById('issueInfo');
+  const book = books.find(b=>b.internal===val);
+  if(!val){ el.innerHTML=''; return; }
+  if(!book) el.innerHTML=`<span style="color:var(--red)">❌ کتاب نہیں ملی</span>`;
+  else if(book.status==='issued') el.innerHTML=`<span style="color:var(--orange)">⚠️ پہلے سے جاری: ${book.name}</span>`;
+  else el.innerHTML=`<span style="color:var(--green)">✅ ${book.name} | ${book.author} | جلد: ${book.volume||'—'}</span>`;
+}
+
+function doIssue(){
+  const kit = document.getElementById('i-kit').value.trim().toUpperCase();
+  const member = document.getElementById('i-member').value.trim();
+  if(!kit||!member){ alert2('KIT نمبر اور رکن کا نام لازمی ہے','error'); return; }
+  const book = books.find(b=>b.internal===kit);
+  if(!book){ alert2('کتاب نہیں ملی','error'); return; }
+  if(book.status==='issued'){ alert2('یہ کتاب پہلے سے جاری ہے','error'); return; }
+
+  // خودکار ممبر ID بنائیں یا موجودہ تلاش کریں
+  const phone = document.getElementById('i-phone').value.trim();
+  const memberObj = getOrCreateMember(member, phone);
+
+  // کرنٹ تاریخ
+  const now = new Date();
+  const issuedDate = now.toLocaleDateString('ur-PK', {year:'numeric',month:'long',day:'numeric'});
+  const issuedDateEn = now.toISOString().split('T')[0];
+
+  book.status='issued';
+  transactions.push({
+    id: Date.now(),
+    kit,
+    bookName: book.name,
+    member,
+    memberId: memberObj.memberId,
+    phone,
+    issued: issuedDate,
+    issuedEn: issuedDateEn,
+    due: document.getElementById('i-due').value,
+    returned: null,
+    returnedDate: null,
+    status: 'issued'
+  });
+  saveData();
+  ['i-kit','i-member','i-phone'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('issueInfo').innerHTML='';
+  renderDashboard();
+  renderMembersList();
+
+  // ممبر ID اور پاسورڈ دکھائیں
+  alert2(`📤 ${book.name} — ${member} کو جاری\n🪪 ID: ${memberObj.memberId} | پاسورڈ: ${memberObj.password}`);
+  
+  // popup دکھائیں
+  setTimeout(()=>{
+    if(confirm(`✅ کتاب جاری ہوگئی!\n\n👤 ${member}\n🪪 ممبر ID: ${memberObj.memberId}\n🔑 پاسورڈ: ${memberObj.password}\n\nکیا ID اور پاسورڈ کاپی کریں؟`)){
+      copyMemberCreds(memberObj.memberId, member, memberObj.password);
+    }
+  }, 300);
+}
+
+// ===================== RETURN =====================
+function lookupReturn(){
+  const val = document.getElementById('r-kit').value.trim().toUpperCase();
+  const el = document.getElementById('returnInfo');
+  const book = books.find(b=>b.internal===val);
+  const tx = transactions.filter(t=>t.kit===val&&t.status==='issued').pop();
+  if(!val){ el.innerHTML=''; return; }
+  if(!book) el.innerHTML=`<span style="color:var(--red)">❌ نہیں ملی</span>`;
+  else if(book.status==='available') el.innerHTML=`<span style="color:var(--text2)">ℹ️ پہلے سے دستیاب</span>`;
+  else el.innerHTML=`<span style="color:var(--orange)">📖 ${book.name} | رکن: ${tx?.member||'—'} | جاری: ${tx?.issued||'—'}</span>`;
+}
+
+function doReturn(){
+  const kit = document.getElementById('r-kit').value.trim().toUpperCase();
+  if(!kit){ alert2('KIT نمبر درج کریں','error'); return; }
+  const book = books.find(b=>b.internal===kit);
+  if(!book){ alert2('کتاب نہیں ملی','error'); return; }
+  if(book.status==='available'){ alert2('پہلے سے دستیاب ہے'); return; }
+  book.status='available';
+
+  // کرنٹ واپسی تاریخ
+  const now = new Date();
+  const returnedDate = now.toLocaleDateString('ur-PK', {year:'numeric',month:'long',day:'numeric'});
+
+  const tx = transactions.filter(t=>t.kit===kit&&t.status==='issued').pop();
+  if(tx){ tx.returned=returnedDate; tx.returnedDate=now.toISOString().split('T')[0]; tx.status='returned'; }
+  saveData();
+  document.getElementById('r-kit').value='';
+  document.getElementById('returnInfo').innerHTML='';
+  renderReturnHistory(); renderDashboard();
+  alert2(`📥 ${book.name} واپس ہوگئی — ${returnedDate}`);
+}
+
+function renderReturnHistory(){
+  const body=document.getElementById('returnBody');
+  const recent=transactions.slice().reverse().slice(0,30);
+  if(!recent.length){ body.innerHTML=`<tr><td colspan="6" class="empty">کوئی ریکارڈ نہیں</td></tr>`; return; }
+  body.innerHTML=recent.map(t=>`<tr class="${t.status==='issued'?'hist-row-issued':'hist-row-returned'}">
+    <td style="font-family:var(--font-mono);font-size:11px;color:var(--gold)">${t.kit}</td>
+    <td>${t.bookName}</td><td>${t.member}</td>
+    <td>${t.issued}</td><td style="color:var(--orange)">${t.due||'—'}</td>
+    <td><span class="badge ${t.status==='issued'?'issued':'avail'}">${t.status==='issued'?'جاری':'واپس'}</span></td>
+  </tr>`).join('');
+}
+
+// ===================== QR CODE =====================
+function generateQRCard(book, container){
+  return new Promise(resolve=>{
+    const card = document.createElement('div');
+    card.className='qr-card';
+    const titleEl = document.createElement('div');
+    titleEl.className='qr-title';
+    titleEl.textContent=book.name;
+    card.appendChild(titleEl);
+    const qrDiv=document.createElement('div');
+    card.appendChild(qrDiv);
+    container.appendChild(card);
+    try{
+      new QRCode(qrDiv,{
+        text:book.internal, width:120, height:120,
+        colorDark:'#000000', colorLight:'#ffffff',
+        correctLevel:QRCode.CorrectLevel.H
+      });
+    }catch(e){}
+    const serialEl=document.createElement('div');
+    serialEl.className='qr-serial';
+    serialEl.textContent=book.internal;
+    card.appendChild(serialEl);
+    const metaEl=document.createElement('div');
+    metaEl.className='qr-meta';
+    metaEl.textContent=`${book.author||''} | جلد: ${book.volume||'—'}`;
+    card.appendChild(metaEl);
+    setTimeout(resolve, 50);
+  });
+}
+
+async function generateAllQR(){
+  const grid=document.getElementById('qrGrid');
+  grid.innerHTML='<div class="loading"><span class="spin">⟳</span> QR کوڈ بنائے جا رہے ہیں...</div>';
+  await new Promise(r=>setTimeout(r,100));
+  grid.innerHTML='';
+  for(const book of books){
+    await generateQRCard(book,grid);
+  }
+  if(!books.length) grid.innerHTML='<div class="empty">کوئی کتاب نہیں</div>';
+  alert2(`${books.length} QR کوڈ تیار`);
+}
+
+async function generateSelectedQR(){
+  const val=document.getElementById('qrSpecific').value.trim().toUpperCase();
+  if(!val){ alert2('KIT نمبر درج کریں','error'); return; }
+  const kits=val.split(',').map(s=>s.trim()).filter(Boolean);
+  const selected=books.filter(b=>kits.includes(b.internal));
+  const grid=document.getElementById('qrGrid');
+  grid.innerHTML='';
+  for(const book of selected) await generateQRCard(book,grid);
+  if(!selected.length) grid.innerHTML='<div class="empty">کوئی کتاب نہیں ملی</div>';
+}
+
+async function showQRSingle(id){
+  const book=books.find(b=>b.id===id);
+  if(!book) return;
+  const grid=document.getElementById('qrGrid');
+  grid.innerHTML='';
+  await generateQRCard(book,grid);
+  showSection('qrprint');
+}
+
+function printQR(){
+  const grid=document.getElementById('qrGrid');
+  const win=window.open('','_blank','width=800,height=600');
+  win.document.write(`<!DOCTYPE html><html><head>
+    <style>
+      body{margin:10px;background:white;font-family:Arial,sans-serif}
+      .grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+      .qr-card{border:1px solid #ddd;border-radius:8px;padding:8px;text-align:center;break-inside:avoid}
+      .qr-title{font-size:10px;margin-bottom:4px;color:#333;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin:0 auto 4px}
+      .qr-serial{font-family:monospace;font-size:11px;font-weight:bold;margin-top:4px;letter-spacing:1px}
+      .qr-meta{font-size:9px;color:#666}
+      @media print{.no-print{display:none}}
+    </style></head><body>
+    <button class="no-print" onclick="window.print()" style="margin-bottom:10px;padding:8px 16px;background:#333;color:white;border:none;border-radius:4px;cursor:pointer">🖨 پرنٹ</button>
+    <div class="grid">${grid.innerHTML}</div>
+    <script>setTimeout(()=>window.print(),500)<\/script>
+  </body></html>`);
+  win.document.close();
+}
+
+// ===================== IMPORT/EXPORT =====================
+function importExcel(input){
+  const file=input.files[0];
+  if(!file) return;
+  document.getElementById('importStatus').textContent='فائل پڑھی جا رہی ہے...';
+  const prog=document.getElementById('importProgress');
+  const fill=document.getElementById('importFill');
+  prog.style.display='block'; fill.style.width='20%';
+  const reader=new FileReader();
+  reader.onload=function(e){
+    try{
+      fill.style.width='50%';
+      const wb=XLSX.read(e.target.result,{type:'binary'});
+      const ws=wb.Sheets[wb.SheetNames[0]];
+      const rows=XLSX.utils.sheet_to_json(ws,{header:1,defval:''});
+      fill.style.width='70%';
+      let added=0, skipped=0;
+      // skip header row (row 0 or row 1 if headers exist)
+      const startRow = rows[0] && String(rows[0][4]||'').toLowerCase().includes('book') ? 1 : 1;
+      for(let i=startRow;i<rows.length;i++){
+        const row=rows[i];
+        if(!row || !String(row[4]||'').trim()) continue; // book name in col E (index 4)
+        let internal = String(row[3]||'').trim();
+        if(!internal) internal=nextKIT();
+        // check duplicate
+        if(books.find(b=>b.internal===internal)){ skipped++; continue; }
+        books.push({
+          id:Date.now()+i,
+          bookNum:String(row[0]||'').trim(),
+          artSub:String(row[1]||'').trim(),
+          almari:String(row[2]||'').trim(),
+          internal,
+          name:String(row[4]||'').trim(),
+          volume:String(row[5]||'').trim(),
+          author:String(row[6]||'').trim(),
+          publisher:String(row[7]||'').trim(),
+          category: String(row[8]||row[1]||'').trim() || 'دیگر',
+          status:'available',
+          addedDate:new Date().toLocaleDateString('ur-PK')
+        });
+        added++;
+      }
+      saveData(); fill.style.width='100%';
+      setTimeout(()=>{ prog.style.display='none'; fill.style.width='0%'; },1000);
+      document.getElementById('importStatus').textContent=`✅ ${added} کتابیں شامل، ${skipped} پہلے سے موجود`;
+      renderDashboard();
+      alert2(`${added} کتابیں امپورٹ ہوگئیں`);
+    }catch(err){
+      prog.style.display='none';
+      document.getElementById('importStatus').textContent='❌ خطا: '+err.message;
+      alert2('امپورٹ میں خطا: '+err.message,'error');
+    }
+    input.value='';
+  };
+  reader.readAsBinaryString(file);
+}
+
+function exportExcel(){
+  const ws_data=[['Book Number','Art & Sub Subtitle','Almari Number','Subtitle & Internal Number','Book Name','Volume','Author','Publisher','Category','Year','Status','Added Date']];
+  books.forEach(b=>ws_data.push([b.bookNum,b.artSub,b.almari,b.internal,b.name,b.volume,b.author,b.publisher,b.category||'',b.year||'',b.status,b.addedDate||'']));
+  const wb=XLSX.utils.book_new();
+  const ws=XLSX.utils.aoa_to_sheet(ws_data);
+  ws['!cols']=[10,15,10,15,30,8,20,20,10,8,10,12].map(w=>({wch:w}));
+  XLSX.utils.book_append_sheet(wb,ws,'کتب خانہ');
+  XLSX.writeFile(wb,'kitabkhana_export.xlsx');
+  alert2('ایکسل ڈاؤنلوڈ ہوگئی');
+}
+
+function backupData(){
+  const data={books,transactions,counter,date:new Date().toISOString(),version:'2.0'};
+  const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download=`kitabkhana_backup_${new Date().toISOString().split('T')[0]}.json`;
+  a.click();
+  alert2('بیک اپ محفوظ ہوگیا');
+}
+
+function restoreBackup(input){
+  const file=input.files[0];
+  if(!file) return;
+  if(!confirm('کیا واقعی بیک اپ بحال کریں؟ موجودہ ڈیٹا بدل جائے گا!')) return;
+  const reader=new FileReader();
+  reader.onload=function(e){
+    try{
+      const data=JSON.parse(e.target.result);
+      books=data.books||[];
+      transactions=data.transactions||[];
+      counter=data.counter||0;
+      saveData(); renderDashboard();
+      alert2('بیک اپ بحال ہوگیا');
+    }catch(err){ alert2('بیک اپ فائل غلط ہے','error'); }
+    input.value='';
+  };
+  reader.readAsText(file);
+}
+
+// ===================== HISTORY =====================
+function renderHistory(){
+  const raw=(document.getElementById('histSearch')?.value||'');
+  const q=normalizeText(raw);
+  let filtered=transactions.filter(t=>!q||normalizeText([t.kit,t.bookName,t.member].join(' ')).includes(q));
+  filtered=filtered.slice().reverse();
+  const body=document.getElementById('histBody');
+  if(!filtered.length){ body.innerHTML=`<tr><td colspan="8" class="empty">کوئی ریکارڈ نہیں</td></tr>`; return; }
+  body.innerHTML=filtered.map(t=>`<tr class="${t.status==='issued'?'hist-row-issued':'hist-row-returned'}">
+    <td style="font-family:var(--font-mono);font-size:11px;color:var(--gold)">${t.kit}</td>
+    <td>${t.bookName}</td><td>${t.member}</td>
+    <td style="font-size:12px">${t.phone||'—'}</td>
+    <td>${t.issued}</td>
+    <td style="color:var(--orange)">${t.due||'—'}</td>
+    <td style="color:var(--green)">${t.returned||'—'}</td>
+    <td><span class="badge ${t.status==='issued'?'issued':'avail'}">${t.status==='issued'?'جاری':'واپس'}</span></td>
+  </tr>`).join('');
+}
+
+// ===================== LEGACY FIX =====================
+function fixLegacyCategories(){
+  let fixed = 0;
+  books.forEach(b=>{
+    if((b.category==='دیگر' || !b.category) && b.artSub){
+      b.category = b.artSub;
+      fixed++;
+    }
+    // پرانے artSub کو categories کی exact spelling سے match کریں
+    if(b.artSub){
+      const normB = normalizeText(b.artSub);
+      const match = categories.find(c => normalizeText(c) === normB);
+      if(match && match !== b.artSub){
+        b.artSub = match;
+        b.category = match;
+        fixed++;
+      }
+    }
+  });
+  if(fixed>0){ saveData(); }
+}
+
+// ===================== INIT =====================
+loadData();
+fixLegacyCategories();
+applyTheme();
+populateCatSelects();
+renderDashboard();
+updateLibIdDisplay();
+startAutoSync();
+
+// Default due date
+const due=new Date(); due.setDate(due.getDate()+14);
+document.getElementById('i-due').value=due.toISOString().split('T')[0];
+refreshKIT();
+
+// ===================== SERVICE WORKER (PWA) =====================
+if('serviceWorker' in navigator){
+  window.addEventListener('load', ()=>{
+    navigator.serviceWorker.register('sw.js')
+      .then(reg=>{ addSyncLog('✅ PWA Service Worker فعال'); })
+      .catch(err=>{ console.log('SW error:', err); });
+  });
+}
+
+// PWA install prompt
+let deferredPrompt;
+window.addEventListener('beforeinstallprompt', (e)=>{
+  e.preventDefault();
+  deferredPrompt = e;
+  // install بٹن دکھائیں
+  const btn = document.getElementById('pwaInstallBtn');
+  if(btn) btn.style.display = 'inline-flex';
+});
+
+function installPWA(){
+  if(!deferredPrompt){ alert2('براؤزر نے install prompt تیار نہیں کیا — URL bar میں install آئیکن دیکھیں','error'); return; }
+  deferredPrompt.prompt();
+  deferredPrompt.userChoice.then(r=>{
+    if(r.outcome==='accepted') alert2('✅ App install ہوگئی!');
+    deferredPrompt = null;
+  });
+}
+</script>
+</body>
+</html>
