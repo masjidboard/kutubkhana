@@ -278,6 +278,9 @@ tbody tr:hover{background:rgba(201,168,76,0.04)}
 #viewerBadge{display:none;position:fixed;top:60px;left:50%;transform:translateX(-50%);z-index:999;background:rgba(52,152,219,0.95);color:#fff;padding:5px 16px;border-radius:20px;font-size:12px;pointer-events:none}
 body.role-viewer .admin-only{display:none!important}
 body.role-viewer #syncBtn{display:none!important}
+body.role-assistant .admin-only{display:none!important}
+body.role-assistant #syncBtn{display:none!important}
+body.role-assistant .assistant-show{display:flex!important}
 </style>
 </head>
 <body>
@@ -287,9 +290,10 @@ body.role-viewer #syncBtn{display:none!important}
   <div class="login-box">
     <div class="login-logo">📚</div>
     <div class="login-title">کتب خانہ</div>
-    <div class="login-sub">Management System v3.0</div>
+    <div class="login-sub">Management System v4.0</div>
     <div class="role-tabs">
       <button class="role-tab active" onclick="selectRole('admin')" id="tab-admin">🔐 ایڈمن</button>
+      <button class="role-tab" onclick="selectRole('assistant')" id="tab-assistant">🤝 اسسٹنٹ</button>
       <button class="role-tab" onclick="selectRole('viewer')" id="tab-viewer">👁 ویوور</button>
       <button class="role-tab" onclick="selectRole('member')" id="tab-member">👤 ممبر</button>
     </div>
@@ -297,6 +301,12 @@ body.role-viewer #syncBtn{display:none!important}
       <div class="login-field">
         <label>پاسورڈ</label>
         <input type="password" id="adminPass" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()">
+      </div>
+    </div>
+    <div id="login-assistant-fields" style="display:none">
+      <div class="login-field">
+        <label>اسسٹنٹ پاسورڈ</label>
+        <input type="password" id="assistantPass" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()">
       </div>
     </div>
     <div id="login-viewer-fields" style="display:none">
@@ -317,7 +327,7 @@ body.role-viewer #syncBtn{display:none!important}
     </div>
     <button class="login-btn" onclick="doLogin()">داخل ہوں</button>
     <div class="login-err" id="loginErr"></div>
-    <div style="font-size:11px;color:var(--text3);margin-top:14px;opacity:0.6">پہلی بار: ایڈمن پاسورڈ <code>admin123</code></div>
+    <div style="font-size:11px;color:var(--text3);margin-top:14px;opacity:0.6">پہلی بار: ایڈمن <code>admin123</code> | اسسٹنٹ <code>asst123</code></div>
   </div>
 </div>
 
@@ -353,8 +363,8 @@ body.role-viewer #syncBtn{display:none!important}
     <div class="nav-item active" onclick="showSection('dashboard')"><span class="nav-icon">🏠</span>ڈیش بورڈ</div>
     <div class="nav-item" onclick="showSection('books')"><span class="nav-icon">📚</span>تمام کتابیں</div>
     <div class="nav-item admin-only" onclick="showSection('add')"><span class="nav-icon">➕</span>کتاب شامل</div>
-    <div class="nav-item admin-only" onclick="showSection('issue')"><span class="nav-icon">📤</span>کتاب جاری</div>
-    <div class="nav-item admin-only" onclick="showSection('returnBook')"><span class="nav-icon">📥</span>واپسی</div>
+    <div class="nav-item admin-only assistant-show" onclick="showSection('issue')" style="display:none"><span class="nav-icon">📤</span>کتاب جاری</div>
+    <div class="nav-item admin-only assistant-show" onclick="showSection('returnBook')" style="display:none"><span class="nav-icon">📥</span>واپسی</div>
     <div class="nav-item admin-only" onclick="showSection('qrprint')"><span class="nav-icon">🔳</span>QR پرنٹ</div>
     <div class="nav-item admin-only" onclick="showSection('importExport')"><span class="nav-icon">📊</span>امپورٹ/ایکسپورٹ</div>
     <div class="nav-item admin-only" onclick="showSection('history')"><span class="nav-icon">📋</span>تاریخ</div>
@@ -737,6 +747,13 @@ body.role-viewer #syncBtn{display:none!important}
     </div>
     <div class="card admin-only" style="margin-top:12px">
       <div class="card-title">⚙️ پاسورڈ سیٹنگز</div>
+      <div class="form-group">
+        <label>اسسٹنٹ پاسورڈ بدلیں</label>
+        <div style="display:flex;gap:8px">
+          <input type="password" id="newAsstPass" placeholder="نیا پاسورڈ" style="flex:1">
+          <button class="btn success" onclick="changeAsstPass()">محفوظ</button>
+        </div>
+      </div>
       <div class="form-group">
         <label>ایڈمن پاسورڈ بدلیں</label>
         <div style="display:flex;gap:8px">
@@ -1158,10 +1175,11 @@ let selectedLoginRole = 'admin';
 
 function getAdminPass(){ return localStorage.getItem('kb_admin_pass') || DEFAULT_ADMIN_PASS; }
 function getViewerPass(){ return localStorage.getItem('kb_viewer_pass') || DEFAULT_VIEWER_PASS; }
+function getAssistantPass(){ return localStorage.getItem('kb_asst_pass') || 'asst123'; }
 
 function selectRole(role){
   selectedLoginRole = role;
-  ['admin','viewer','member'].forEach(r=>{
+  ['admin','assistant','viewer','member'].forEach(r=>{
     document.getElementById('tab-'+r)?.classList.toggle('active', r===role);
     const f = document.getElementById('login-'+r+'-fields');
     if(f) f.style.display = r===role ? '' : 'none';
@@ -1177,6 +1195,14 @@ function doLogin(){
     const pass = document.getElementById('adminPass').value;
     if(pass === getAdminPass()){
       enterSystem('admin');
+    } else {
+      err.textContent = '❌ پاسورڈ غلط ہے';
+    }
+  }
+  else if(selectedLoginRole === 'assistant'){
+    const pass = document.getElementById('assistantPass').value;
+    if(pass === getAssistantPass()){
+      enterSystem('assistant');
     } else {
       err.textContent = '❌ پاسورڈ غلط ہے';
     }
@@ -1206,21 +1232,33 @@ function enterSystem(role){
   currentRole = role;
   document.getElementById('loginScreen').style.display = 'none';
   document.body.classList.toggle('role-viewer', role === 'viewer');
+  document.body.classList.toggle('role-assistant', role === 'assistant');
+
   const badge = document.getElementById('viewerBadge');
-  if(badge) badge.style.display = role === 'viewer' ? 'block' : 'none';
+  if(role === 'viewer'){
+    if(badge){ badge.textContent = '👁 ویوور موڈ — صرف دیکھنا'; badge.style.display = 'block'; }
+  } else if(role === 'assistant'){
+    if(badge){ badge.textContent = '🤝 اسسٹنٹ موڈ — جاری و واپسی'; badge.style.display = 'block'; }
+  } else {
+    if(badge) badge.style.display = 'none';
+  }
+
   const roleBadge = document.getElementById('currentRoleBadge');
-  if(roleBadge) roleBadge.textContent = role === 'admin' ? '🔐 ایڈمن' : '👁 ویوور';
-  // auto-sync for admin
+  const roleNames = { admin:'🔐 ایڈمن', assistant:'🤝 اسسٹنٹ', viewer:'👁 ویوور' };
+  if(roleBadge) roleBadge.textContent = roleNames[role] || '';
+
   if(role === 'admin' && navigator.onLine) setTimeout(syncNow, 1500);
+  if(role === 'assistant' && navigator.onLine) setTimeout(syncNow, 1500);
 }
 
 function doLogout(){
   currentRole = null;
   currentMemberId = null;
-  document.body.classList.remove('role-viewer');
+  document.body.classList.remove('role-viewer','role-assistant');
   document.getElementById('viewerBadge').style.display = 'none';
   document.getElementById('adminPass').value = '';
   document.getElementById('viewerPass').value = '';
+  document.getElementById('assistantPass').value = '';
   document.getElementById('loginScreen').style.display = 'flex';
 }
 
@@ -1332,6 +1370,15 @@ function copyMemberCreds(id, name, pass){
   navigator.clipboard.writeText(text).then(()=>alert2('کاپی ہوگئی!')).catch(()=>prompt('کاپی کریں:',text));
 }
 
+function changeAsstPass(){
+  const inp = document.getElementById('newAsstPass');
+  const pass = inp.value.trim();
+  if(pass.length < 4){ alert2('کم از کم 4 حروف','error'); return; }
+  localStorage.setItem('kb_asst_pass', pass);
+  inp.value = '';
+  alert2('اسسٹنٹ پاسورڈ محفوظ ✅');
+}
+
 function changeAdminPass(){
   const inp = document.getElementById('newAdminPass');
   const pass = inp.value.trim();
@@ -1361,10 +1408,15 @@ function saveFirebaseConfig(){
 }
 
 function showSection(key){
-  // viewer کے لیے admin-only sections بلاک کریں
-  const adminSections = ['add','issue','returnBook','qrprint','importExport','history','categories','members'];
-  if(currentRole === 'viewer' && adminSections.includes(key)){
+  const adminSections = ['add','qrprint','importExport','history','categories','members'];
+  const assistantAllowed = ['dashboard','books','issue','returnBook'];
+
+  if(currentRole === 'viewer' && !['dashboard','books'].includes(key)){
     alert2('👁 ویوور موڈ میں یہ سیکشن نہیں کھل سکتا','error');
+    return;
+  }
+  if(currentRole === 'assistant' && adminSections.includes(key)){
+    alert2('🤝 اسسٹنٹ موڈ میں یہ سیکشن نہیں کھل سکتا','error');
     return;
   }
   document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
