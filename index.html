@@ -285,6 +285,26 @@ body.role-assistant .assistant-show{display:flex!important}
 </head>
 <body>
 
+<!-- LIBRARY ID SCREEN (سب سے پہلے) -->
+<div id="libIdScreen" style="position:fixed;inset:0;z-index:10000;background:var(--bg1);display:flex;align-items:center;justify-content:center;padding:20px">
+  <div class="login-box">
+    <div class="login-logo">📚</div>
+    <div class="login-title">کتب خانہ</div>
+    <div class="login-sub" style="margin-bottom:20px">کیا آپ کے پاس Library ID پہلے سے ہے؟</div>
+    <div style="display:flex;flex-direction:column;gap:12px">
+      <button class="login-btn" style="background:var(--gold)" onclick="showLibIdInput()">✅ ہاں — ID ڈالیں</button>
+      <button class="login-btn" style="background:var(--bg4);color:var(--text1);border:1px solid var(--border)" onclick="skipLibId()">🆕 نہیں — نئی شروع کریں</button>
+    </div>
+    <div id="libIdInputArea" style="display:none;margin-top:16px">
+      <div class="login-field">
+        <label>Library ID</label>
+        <input id="existingLibId" placeholder="مثال: LIB-AB3C9XYZ" style="font-family:var(--font-mono);text-transform:uppercase" onkeydown="if(event.key==='Enter')applyLibIdFromScreen()">
+      </div>
+      <button class="login-btn" onclick="applyLibIdFromScreen()">جاری رکھیں ←</button>
+    </div>
+  </div>
+</div>
+
 <!-- LOGIN SCREEN -->
 <div id="loginScreen">
   <div class="login-box">
@@ -363,8 +383,10 @@ body.role-assistant .assistant-show{display:flex!important}
     <div class="nav-item active" onclick="showSection('dashboard')"><span class="nav-icon">🏠</span>ڈیش بورڈ</div>
     <div class="nav-item" onclick="showSection('books')"><span class="nav-icon">📚</span>تمام کتابیں</div>
     <div class="nav-item admin-only" onclick="showSection('add')"><span class="nav-icon">➕</span>کتاب شامل</div>
-    <div class="nav-item admin-only assistant-show" onclick="showSection('issue')" style="display:none"><span class="nav-icon">📤</span>کتاب جاری</div>
-    <div class="nav-item admin-only assistant-show" onclick="showSection('returnBook')" style="display:none"><span class="nav-icon">📥</span>واپسی</div>
+    <div class="nav-item admin-only" id="nav-issue" onclick="showSection('issue')"><span class="nav-icon">📤</span>کتاب جاری</div>
+    <div class="nav-item admin-only" id="nav-return" onclick="showSection('returnBook')"><span class="nav-icon">📥</span>واپسی</div>
+    <div class="nav-item assistant-show" id="nav-issue-asst" onclick="showSection('issue')" style="display:none"><span class="nav-icon">📤</span>کتاب جاری</div>
+    <div class="nav-item assistant-show" id="nav-return-asst" onclick="showSection('returnBook')" style="display:none"><span class="nav-icon">📥</span>واپسی</div>
     <div class="nav-item admin-only" onclick="showSection('qrprint')"><span class="nav-icon">🔳</span>QR پرنٹ</div>
     <div class="nav-item admin-only" onclick="showSection('importExport')"><span class="nav-icon">📊</span>امپورٹ/ایکسپورٹ</div>
     <div class="nav-item admin-only" onclick="showSection('history')"><span class="nav-icon">📋</span>تاریخ</div>
@@ -433,8 +455,7 @@ body.role-assistant .assistant-show{display:flex!important}
       <select id="bookCatFilter" onchange="searchBooks()" style="width:160px">
         <option value="">سب زمرے</option>
       </select>
-      <button class="btn sm success" onclick="showSection('add')">+ نئی کتاب</button>
-      <button class="btn sm danger" onclick="deleteAllBooks()">🗑 سب حذف</button>
+      <button class="btn sm success admin-only" onclick="showSection('add')">+ نئی کتاب</button>
     </div>
     <div id="booksCountBar" style="font-size:12px;color:var(--text3);margin-bottom:8px;font-family:var(--font-mono)"></div>
     <div class="card" style="padding:0;overflow:hidden">
@@ -540,6 +561,17 @@ body.role-assistant .assistant-show{display:flex!important}
         </div>
       </div>
       <div id="issueInfo" style="font-size:13px;margin:8px 0;min-height:20px"></div>
+      <div id="lastIssuedMember" style="display:none;background:rgba(201,168,76,0.1);border:1px solid var(--gold);border-radius:8px;padding:12px;margin-bottom:10px">
+        <div style="font-size:12px;color:var(--text2);margin-bottom:6px">✅ آخری جاری کردہ ممبر:</div>
+        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
+          <div>
+            <span id="lastMemberName" style="font-weight:600;font-size:14px"></span><br>
+            <span style="font-family:var(--font-mono);font-size:12px;color:var(--gold)">ID: <strong id="lastMemberId"></strong></span>
+            <span style="font-family:var(--font-mono);font-size:12px;color:var(--text2);margin-right:10px"> | پاسورڈ: <strong id="lastMemberPass"></strong></span>
+          </div>
+          <button class="btn sm info" onclick="copyLastMember()">📋 کاپی</button>
+        </div>
+      </div>
       <div class="btn-row">
         <button class="btn success" onclick="doIssue()">📤 جاری کریں</button>
       </div>
@@ -661,7 +693,25 @@ body.role-assistant .assistant-show{display:flex!important}
         </label>
       </div>
     </div>
-    <div class="danger-zone">
+    <div class="card admin-only" style="border-color:rgba(52,168,83,0.3);background:rgba(52,168,83,0.05);margin-top:12px">
+      <div class="card-title">📧 Google Drive بیک اپ</div>
+      <div style="font-size:12px;color:var(--text2);margin-bottom:12px;line-height:1.8">
+        اپنی Gmail ID ڈالیں — ڈیٹا Google Drive میں محفوظ ہوتا رہے گا۔ کبھی بھی وہی ID ڈال کر بیک اپ بحال کریں۔ (واٹس ایپ جیسا)
+      </div>
+      <div class="form-group">
+        <label>Gmail ID</label>
+        <div style="display:flex;gap:8px">
+          <input id="backupEmail" type="email" placeholder="example@gmail.com" style="flex:1" value="">
+          <button class="btn primary" onclick="saveBackupEmail()">💾 محفوظ</button>
+        </div>
+        <div id="backupEmailStatus" style="font-size:11px;color:var(--text3);margin-top:6px"></div>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn success" onclick="backupToDrive()">☁️ Drive میں محفوظ کریں</button>
+        <button class="btn info" onclick="restoreFromDrive()">🔄 Drive سے بحال کریں</button>
+      </div>
+      <div id="driveBackupLog" style="font-size:11px;color:var(--text3);margin-top:10px;font-family:var(--font-mono)"></div>
+    </div>
       <div class="danger-zone-title">⚠️ خطرناک زون</div>
       <p style="font-size:12px;color:var(--text2);margin-bottom:10px">یہ عمل ناقابلِ واپسی ہے — پہلے بیک اپ لیں</p>
       <div class="btn-row" style="margin-top:0">
@@ -1365,6 +1415,12 @@ function renderMembersList(){
   }).join('');
 }
 
+function copyLastMember(){
+  const m = window._lastMemberObj;
+  if(!m) return;
+  copyMemberCreds(m.memberId, m.name, m.password);
+}
+
 function copyMemberCreds(id, name, pass){
   const text = `کتب خانہ — ممبر لاگ ان\nنام: ${name}\nID: ${id}\nپاسورڈ: ${pass}`;
   navigator.clipboard.writeText(text).then(()=>alert2('کاپی ہوگئی!')).catch(()=>prompt('کاپی کریں:',text));
@@ -1397,6 +1453,106 @@ function changeViewerPass(){
   alert2('Viewer پاسورڈ محفوظ ✅');
 }
 
+// ===================== LIBRARY ID SCREEN =====================
+function showLibIdInput(){
+  document.getElementById('libIdInputArea').style.display = 'block';
+  document.getElementById('existingLibId').focus();
+}
+
+function skipLibId(){
+  document.getElementById('libIdScreen').style.display = 'none';
+  // loginScreen پہلے سے ہے
+}
+
+function applyLibIdFromScreen(){
+  const val = document.getElementById('existingLibId').value.trim().toUpperCase();
+  if(!val){ alert2('Library ID درج کریں','error'); return; }
+  localStorage.setItem('kb_lib_id', val);
+  updateLibIdDisplay();
+  document.getElementById('libIdScreen').style.display = 'none';
+}
+
+// ===================== GOOGLE DRIVE BACKUP =====================
+function saveBackupEmail(){
+  const email = document.getElementById('backupEmail').value.trim();
+  if(!email || !email.includes('@')){ alert2('درست Gmail ID درج کریں','error'); return; }
+  localStorage.setItem('kb_backup_email', email);
+  document.getElementById('backupEmailStatus').textContent = '✅ Gmail ID محفوظ: ' + email;
+  alert2('Gmail ID محفوظ ✅');
+}
+
+function backupToDrive(){
+  const email = localStorage.getItem('kb_backup_email');
+  if(!email){ alert2('پہلے Gmail ID محفوظ کریں','error'); return; }
+  const log = document.getElementById('driveBackupLog');
+
+  // Firebase میں بیک اپ محفوظ کریں (email کی بنیاد پر)
+  if(!window._firebaseReady){ 
+    if(log) log.textContent = '⚠️ Firebase جڑا نہیں';
+    return; 
+  }
+
+  const emailKey = email.replace(/[.@]/g,'_');
+  const backupData = {
+    books, transactions, counter,
+    categories,
+    libId: getLibraryId(),
+    email,
+    backupDate: new Date().toISOString(),
+    version: '4.0'
+  };
+
+  const db = window._firebaseDb;
+  const docRef = window._fsDoc(db, 'backups', emailKey);
+  window._fsSetDoc(docRef, backupData).then(()=>{
+    const t = new Date().toLocaleTimeString('ur-PK');
+    if(log) log.textContent = `✅ بیک اپ محفوظ — ${t}\n📧 ${email}`;
+    alert2('☁️ Drive میں محفوظ ✅');
+  }).catch(err=>{
+    if(log) log.textContent = '❌ خطا: ' + err.message;
+  });
+}
+
+function restoreFromDrive(){
+  const email = document.getElementById('backupEmail').value.trim() || localStorage.getItem('kb_backup_email');
+  if(!email){ alert2('Gmail ID درج کریں','error'); return; }
+  if(!window._firebaseReady){ alert2('Firebase جڑا نہیں','error'); return; }
+  const log = document.getElementById('driveBackupLog');
+  if(log) log.textContent = '⏳ بیک اپ تلاش ہو رہا ہے...';
+
+  const emailKey = email.replace(/[.@]/g,'_');
+  const db = window._firebaseDb;
+  const docRef = window._fsDoc(db, 'backups', emailKey);
+  window._fsGetDoc(docRef).then(snap=>{
+    if(!snap.exists()){
+      if(log) log.textContent = '❌ اس Gmail ID کا کوئی بیک اپ نہیں ملا';
+      alert2('کوئی بیک اپ نہیں ملا','error');
+      return;
+    }
+    const data = snap.data();
+    if(!confirm(`بیک اپ ملا!\n\nتاریخ: ${new Date(data.backupDate).toLocaleDateString('ur-PK')}\nکتابیں: ${data.books?.length || 0}\n\nکیا بحال کریں؟ (موجودہ ڈیٹا بدل جائے گا)`)) return;
+    books = data.books || [];
+    transactions = data.transactions || [];
+    counter = data.counter || 0;
+    if(data.categories) categories = data.categories;
+    if(data.libId) localStorage.setItem('kb_lib_id', data.libId);
+    saveData();
+    renderDashboard();
+    updateLibIdDisplay();
+    localStorage.setItem('kb_backup_email', email);
+    if(log) log.textContent = `✅ بیک اپ بحال — ${books.length} کتابیں`;
+    alert2(`✅ بیک اپ بحال! ${books.length} کتابیں`);
+  }).catch(err=>{
+    if(log) log.textContent = '❌ خطا: ' + err.message;
+  });
+}
+
+// auto backup after sync (admin only)
+function autoBackupAfterSync(){
+  const email = localStorage.getItem('kb_backup_email');
+  if(email && currentRole === 'admin') backupToDrive();
+}
+
 function saveFirebaseConfig(){
   const apiKey = document.getElementById('cfg-apikey').value.trim();
   const appId = document.getElementById('cfg-appid').value.trim();
@@ -1409,7 +1565,6 @@ function saveFirebaseConfig(){
 
 function showSection(key){
   const adminSections = ['add','qrprint','importExport','history','categories','members'];
-  const assistantAllowed = ['dashboard','books','issue','returnBook'];
 
   if(currentRole === 'viewer' && !['dashboard','books'].includes(key)){
     alert2('👁 ویوور موڈ میں یہ سیکشن نہیں کھل سکتا','error');
@@ -1907,21 +2062,23 @@ function doIssue(){
     returnedDate: null,
     status: 'issued'
   });
+  // ممبر ID issue section میں دکھائیں
+  const lastDiv = document.getElementById('lastIssuedMember');
+  if(lastDiv){
+    lastDiv.style.display = 'block';
+    document.getElementById('lastMemberName').textContent = '👤 ' + member;
+    document.getElementById('lastMemberId').textContent = memberObj.memberId;
+    document.getElementById('lastMemberPass').textContent = memberObj.password;
+    window._lastMemberObj = memberObj;
+  }
+
   saveData();
   ['i-kit','i-member','i-phone'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('issueInfo').innerHTML='';
   renderDashboard();
   renderMembersList();
 
-  // ممبر ID اور پاسورڈ دکھائیں
-  alert2(`📤 ${book.name} — ${member} کو جاری\n🪪 ID: ${memberObj.memberId} | پاسورڈ: ${memberObj.password}`);
-  
-  // popup دکھائیں
-  setTimeout(()=>{
-    if(confirm(`✅ کتاب جاری ہوگئی!\n\n👤 ${member}\n🪪 ممبر ID: ${memberObj.memberId}\n🔑 پاسورڈ: ${memberObj.password}\n\nکیا ID اور پاسورڈ کاپی کریں؟`)){
-      copyMemberCreds(memberObj.memberId, member, memberObj.password);
-    }
-  }, 300);
+  alert2(`📤 ${book.name} — ${member} کو جاری | ID: ${memberObj.memberId}`);
 }
 
 // ===================== RETURN =====================
@@ -2198,6 +2355,15 @@ populateCatSelects();
 renderDashboard();
 updateLibIdDisplay();
 startAutoSync();
+
+// backup email لوڈ کریں
+const savedEmail = localStorage.getItem('kb_backup_email');
+if(savedEmail){
+  const emailInp = document.getElementById('backupEmail');
+  if(emailInp) emailInp.value = savedEmail;
+  const st = document.getElementById('backupEmailStatus');
+  if(st) st.textContent = '✅ Gmail ID: ' + savedEmail;
+}
 
 // Default due date
 const due=new Date(); due.setDate(due.getDate()+14);
