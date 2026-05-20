@@ -278,8 +278,10 @@ tbody tr:hover{background:rgba(201,168,76,0.04)}
 #viewerBadge{display:none;position:fixed;top:60px;left:50%;transform:translateX(-50%);z-index:999;background:rgba(52,152,219,0.95);color:#fff;padding:5px 16px;border-radius:20px;font-size:12px;pointer-events:none}
 body.role-viewer .admin-only{display:none!important}
 body.role-viewer #syncBtn{display:none!important}
+body.role-viewer .danger-zone{display:none!important}
 body.role-assistant .admin-only{display:none!important}
 body.role-assistant #syncBtn{display:none!important}
+body.role-assistant .danger-zone{display:none!important}
 body.role-assistant .assistant-show{display:flex!important}
 </style>
 </head>
@@ -712,6 +714,7 @@ body.role-assistant .assistant-show{display:flex!important}
       </div>
       <div id="driveBackupLog" style="font-size:11px;color:var(--text3);margin-top:10px;font-family:var(--font-mono)"></div>
     </div>
+    <div class="danger-zone admin-only">
       <div class="danger-zone-title">⚠️ خطرناک زون</div>
       <p style="font-size:12px;color:var(--text2);margin-bottom:10px">یہ عمل ناقابلِ واپسی ہے — پہلے بیک اپ لیں</p>
       <div class="btn-row" style="margin-top:0">
@@ -1026,6 +1029,15 @@ async function syncNow(){
         transactions = mergedTx;
         if(cloudData.counter > counter) counter = cloudData.counter;
         
+        // members merge
+        if(cloudData.members && cloudData.members.length > 0){
+          const localMembers = getMembers();
+          const mergedMembers = [...new Map(
+            [...cloudData.members, ...localMembers].map(m=>[m.memberId, m])
+          ).values()];
+          saveMembers(mergedMembers);
+        }
+        
         // localStorage بھی اپڈیٹ
         localStorage.setItem('kb_books', JSON.stringify(books));
         localStorage.setItem('kb_tx', JSON.stringify(transactions));
@@ -1039,9 +1051,10 @@ async function syncNow(){
     // اب local data Firebase کو بھیجیں
     await window._fsSetDoc(docRef, {
       books, transactions, counter,
+      members: getMembers(),
       lastModified: Date.now(),
       libId,
-      version: '3.0'
+      version: '4.0'
     });
 
     lastSyncTime = Date.now();
@@ -1496,6 +1509,7 @@ function backupToDrive(){
   const backupData = {
     books, transactions, counter,
     categories,
+    members: getMembers(),
     libId: getLibraryId(),
     email,
     backupDate: new Date().toISOString(),
@@ -1535,6 +1549,7 @@ function restoreFromDrive(){
     transactions = data.transactions || [];
     counter = data.counter || 0;
     if(data.categories) categories = data.categories;
+    if(data.members) saveMembers(data.members);
     if(data.libId) localStorage.setItem('kb_lib_id', data.libId);
     saveData();
     renderDashboard();
