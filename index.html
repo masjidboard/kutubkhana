@@ -2389,8 +2389,60 @@ refreshKIT();
 if('serviceWorker' in navigator){
   window.addEventListener('load', ()=>{
     navigator.serviceWorker.register('sw.js')
-      .then(reg=>{ addSyncLog('✅ PWA Service Worker فعال'); })
+      .then(reg=>{
+        addSyncLog('✅ PWA فعال');
+
+        // نئی اپڈیٹ چیک کریں
+        reg.addEventListener('updatefound', ()=>{
+          const newWorker = reg.installing;
+          newWorker.addEventListener('statechange', ()=>{
+            if(newWorker.state === 'installed' && navigator.serviceWorker.controller){
+              // نئی اپڈیٹ آگئی — صارف کو بتائیں
+              showUpdateBanner();
+            }
+          });
+        });
+
+        // ہر 5 منٹ بعد اپڈیٹ چیک
+        setInterval(()=>reg.update(), 5 * 60 * 1000);
+      })
       .catch(err=>{ console.log('SW error:', err); });
+
+    // جب نیا SW فعال ہو تو page reload کریں
+    navigator.serviceWorker.addEventListener('controllerchange', ()=>{
+      window.location.reload();
+    });
+  });
+}
+
+function showUpdateBanner(){
+  // اگر پہلے سے موجود ہو تو نہ بنائیں
+  if(document.getElementById('updateBanner')) return;
+  const banner = document.createElement('div');
+  banner.id = 'updateBanner';
+  banner.style.cssText = `
+    position:fixed;bottom:20px;left:50%;transform:translateX(-50%);
+    background:#2ecc71;color:#000;padding:12px 20px;border-radius:12px;
+    font-size:13px;font-weight:600;z-index:99999;
+    display:flex;gap:12px;align-items:center;
+    box-shadow:0 4px 20px rgba(0,0,0,0.3);
+    font-family:var(--font-urdu);
+  `;
+  banner.innerHTML = `
+    <span>🆕 نئی اپڈیٹ دستیاب ہے!</span>
+    <button onclick="applyUpdate()" style="background:#000;color:#fff;border:none;padding:6px 14px;border-radius:8px;cursor:pointer;font-size:12px">ابھی لگائیں</button>
+    <button onclick="this.parentElement.remove()" style="background:transparent;border:none;font-size:16px;cursor:pointer">✕</button>
+  `;
+  document.body.appendChild(banner);
+}
+
+function applyUpdate(){
+  navigator.serviceWorker.getRegistration().then(reg=>{
+    if(reg && reg.waiting){
+      reg.waiting.postMessage('SKIP_WAITING');
+    } else {
+      window.location.reload();
+    }
   });
 }
 

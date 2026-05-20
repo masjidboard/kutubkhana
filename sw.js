@@ -1,68 +1,90 @@
-// KitabKhana Service Worker v4.0
-const CACHE_NAME = 'kitabkhana-v4';
-const STATIC_CACHE = 'kitabkhana-static-v4';
+// KitabKhana Service Worker v4.1
+// ⚠️ جب بھی index.html اپڈیٹ کریں — یہ نمبر بدلیں: v4.1 → v4.2 وغیرہ
+const VERSION = 'kitabkhana-v4.1';
 
-// یہ فائلیں آف لائن کے لیے cache ہوں گی
-const CACHE_URLS = [
-  './',
-  './index.html',
-  'https://fonts.googleapis.com/css2?family=Noto+Nastaliq+Urdu:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&family=Playfair+Display:wght@700&display=swap',
-  'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js',
-  'https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js',
-  'https://cdnjs.cloudflare.com/ajax/libs/jsQR/1.4.0/jsQR.min.js'
-];
-
-// Install — فائلیں cache کریں
+// Install — نئی cache بنائیں
 self.addEventListener('install', event => {
   event.waitUntil(
-    caches.open(STATIC_CACHE).then(cache => {
-      return cache.addAll(CACHE_URLS).catch(err => {
-        console.log('Cache addAll partial error:', err);
-      });
+    caches.open(VERSION).then(cache => {
+      return cache.addAll([
+        './',
+        './index.html',
+        'https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js',
+        'https://cdnjs.cloudflare.com/ajax/libs/jsQR/1.4.0/jsQR.min.js'
+      ]).catch(()=>{});
     })
   );
+  // فوری activate — انتظار نہ کریں
   self.skipWaiting();
 });
 
-// Activate — پرانی cache صاف کریں
+// Activate — پرانی cache فوری صاف کریں
 self.addEventListener('activate', event => {
   event.waitUntil(
     caches.keys().then(keys =>
       Promise.all(
-        keys.filter(k => k !== STATIC_CACHE && k !== CACHE_NAME)
-            .map(k => caches.delete(k))
+        keys.filter(k => k !== VERSION).map(k => {
+          console.log('[SW] پرانی cache حذف:', k);
+          return caches.delete(k);
+        })
       )
-    )
-  );
-  self.clients.claim();
-});
-
-// Fetch — cache first, network fallback
-self.addEventListener('fetch', event => {
-  // Firebase اور Google APIs کو cache نہ کریں
-  const url = event.request.url;
-  if (url.includes('firebase') || 
-      url.includes('googleapis.com/identitytoolkit') ||
-      url.includes('firestore.googleapis.com')) {
-    return; // network سے لیں
-  }
-
-  event.respondWith(
-    caches.match(event.request).then(cached => {
-      if (cached) return cached;
-      return fetch(event.request).then(response => {
-        // صرف GET requests cache کریں
-        if (event.request.method !== 'GET') return response;
-        if (!response || response.status !== 200) return response;
-        const clone = response.clone();
-        caches.open(STATIC_CACHE).then(cache => cache.put(event.request, clone));
-        return response;
-      }).catch(() => {
-        // آف لائن fallback
-        if (event.request.destination === 'document') {
-          return caches.match('./index.html');
-        }
-      });
+    ).then(() => {
+      // تمام کھلے pages کو فوری کنٹرول دیں
+      return self.clients.claim();
     })
   );
+});
+
+// Fetch — Network First for HTML, Cache First for assets
+self.addEventListener('fetch', event => {
+  const url = event.request.url;
+
+  // Firebase / Google APIs — ہمیشہ network سے
+  if(url.includes('firebase') ||
+     url.includes('firestore') ||
+     url.includes('googleapis.com') ||
+     url.includes('gstatic.com/firebasejs')){
+    return;
+  }
+
+  // index.html — ہمیشہ network first (تازہ فائل ملے)
+  if(event.request.mode === 'navigate' ||
+     url.endsWith('index.html') ||
+     url.endsWith('/')){
+    event.respondWith(
+      fetch(event.request)
+        .then(response => {
+          // نئی فائل cache میں محفوظ کریں
+          const clone = response.clone();
+          caches.open(VERSION).then(c => c.put(event.request, clone));
+          return response;
+        })
+        .catch(() => {
+          // آف لائن ہو تو cache سے دیں
+          return caches.match('./index.html');
+        })
+    );
+    return;
+  }
+
+  // باقی assets — Cache First
+  event.respondWith(
+    caches.match(event.request).then(cached => {
+      if(cached) return cached;
+      return fetch(event.request).then(response => {
+        if(!response || response.status !== 200 || event.request.method !== 'GET')
+          return response;
+        const clone = response.clone();
+        caches.open(VERSION).then(c => c.put(event.request, clone));
+        return response;
+      }).catch(() => caches.match('./index.html'));
+    })
+  );
+});
+
+// Message — باہر سے اپڈیٹ کا حکم
+self.addEventListener('message', event => {
+  if(event.data === 'SKIP_WAITING'){
+    self.skipWaiting();
+  }
 });
