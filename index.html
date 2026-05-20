@@ -276,12 +276,23 @@ tbody tr:hover{background:rgba(201,168,76,0.04)}
 .overdue-tag{background:rgba(231,76,60,0.2)!important;color:var(--red)!important}
 /* ===== VIEWER ===== */
 #viewerBadge{display:none;position:fixed;top:60px;left:50%;transform:translateX(-50%);z-index:999;background:rgba(52,152,219,0.95);color:#fff;padding:5px 16px;border-radius:20px;font-size:12px;pointer-events:none}
+/* ===== ROLE BASED HIDING ===== */
+/* VIEWER — صرف dashboard اور books */
 body.role-viewer .admin-only{display:none!important}
+body.role-viewer .assistant-only{display:none!important}
 body.role-viewer #syncBtn{display:none!important}
 body.role-viewer .danger-zone{display:none!important}
+body.role-viewer .btn.danger{display:none!important}
+body.role-viewer .edit-btn{display:none!important}
+body.role-viewer .delete-btn{display:none!important}
+body.role-viewer .action-btns{display:none!important}
+
+/* ASSISTANT — صرف books + issue + return */
 body.role-assistant .admin-only{display:none!important}
 body.role-assistant #syncBtn{display:none!important}
 body.role-assistant .danger-zone{display:none!important}
+body.role-assistant .delete-btn{display:none!important}
+body.role-assistant .edit-btn{display:none!important}
 body.role-assistant .assistant-show{display:flex!important}
 </style>
 </head>
@@ -1310,8 +1321,10 @@ function enterSystem(role){
   const roleNames = { admin:'🔐 ایڈمن', assistant:'🤝 اسسٹنٹ', viewer:'👁 ویوور' };
   if(roleBadge) roleBadge.textContent = roleNames[role] || '';
 
-  if(role === 'admin' && navigator.onLine) setTimeout(syncNow, 1500);
-  if(role === 'assistant' && navigator.onLine) setTimeout(syncNow, 1500);
+  // dashboard render کریں تاکہ role کے مطابق بٹن آئیں
+  renderDashboard();
+
+  if((role === 'admin' || role === 'assistant') && navigator.onLine) setTimeout(syncNow, 1500);
 }
 
 function doLogout(){
@@ -1669,8 +1682,11 @@ function doScan(){
     <span style="color:var(--text2)">${book.author} | جلد: ${book.volume||'—'}</span>
     <span style="font-family:var(--font-mono);font-size:11px;color:var(--gold)">${book.internal}</span>
     ${st
-      ? `<button class="btn sm success" onclick="prefillIssue('${book.internal}')">جاری کریں</button>`
-      : `<button class="btn sm danger" onclick="prefillReturn('${book.internal}')">واپسی</button>`}
+      ? `<button class="btn sm success admin-only" onclick="prefillIssue('${book.internal}')">جاری کریں</button>`
+      : `<button class="btn sm danger admin-only" onclick="prefillReturn('${book.internal}')">واپسی</button>`}
+    ${st
+      ? `<button class="btn sm success assistant-show" style="display:none" onclick="prefillIssue('${book.internal}')">جاری کریں</button>`
+      : `<button class="btn sm danger assistant-show" style="display:none" onclick="prefillReturn('${book.internal}')">واپسی</button>`}
   </div>`;
   document.getElementById('scanInput').value='';
 }
@@ -1746,9 +1762,9 @@ function renderBooksTable(){
     <td><span class="badge ${b.status==='available'?'avail':'issued'}">${b.status==='available'?'دستیاب':'جاری'}</span></td>
     <td>
       <div style="display:flex;gap:4px">
-        <button class="btn sm" onclick="editBook(${b.id})">✏️</button>
+        <button class="btn sm edit-btn admin-only" onclick="editBook(${b.id})">✏️</button>
         <button class="btn sm info" onclick="showQRSingle(${b.id})">QR</button>
-        <button class="btn sm danger" onclick="deleteBook(${b.id})">🗑</button>
+        <button class="btn sm danger delete-btn admin-only" onclick="deleteBook(${b.id})">🗑</button>
       </div>
     </td>
   </tr>`).join('');
@@ -1863,8 +1879,8 @@ function renderCategories(){
       <span class="cat-name" id="cat-name-${i}">${cat}</span>
       <span class="cat-count">${usedCount} کتاب</span>
       <button class="btn sm success" onclick="viewCatBooks('${cat.replace(/'/g,"\\'")}',event)" title="اس زمرے کی کتابیں دیکھیں">📚</button>
-      <button class="btn sm info" onclick="startEditCat(${i})" title="ترمیم">✏️</button>
-      <button class="btn sm danger" onclick="deleteCat(${i})" title="حذف" ${usedCount>0?`style="opacity:0.5" title='پہلے کتابوں کا زمرہ بدلیں'`:''}>🗑</button>
+      <button class="btn sm info edit-btn admin-only" onclick="startEditCat(${i})" title="ترمیم">✏️</button>
+      <button class="btn sm danger delete-btn admin-only" onclick="deleteCat(${i})" title="حذف" ${usedCount>0?`style="opacity:0.5" title='پہلے کتابوں کا زمرہ بدلیں'`:''}>🗑</button>
     </div>`;
   }).join('');
 }
