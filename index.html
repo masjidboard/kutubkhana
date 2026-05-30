@@ -640,6 +640,13 @@ body.role-assistant .assistant-show{display:flex!important}
         <button class="btn success" onclick="printQR()">🖨 پرنٹ کریں</button>
       </div>
       <div class="form-group" style="margin-bottom:12px">
+        <label>زمرہ / فن کے اعتبار سے QR (مثلاً تفسیر، عقائد)</label>
+        <div style="display:flex;gap:6px">
+          <select id="qrCatSelect" style="flex:1"></select>
+          <button class="btn primary" onclick="generateCategoryQR()" style="flex-shrink:0">🏷 اس فن کے QR</button>
+        </div>
+      </div>
+      <div class="form-group" style="margin-bottom:12px">
         <label>مخصوص KIT نمبر (ایک یا زیادہ، کوما سے الگ)</label>
         <input id="qrSpecific" placeholder="مثال: KIT-0001, KIT-0005, KIT-0010">
       </div>
@@ -1642,6 +1649,7 @@ function showSection(key){
   if(key==='categories') renderCategories();
   if(key==='members') renderMembersList();
   if(key==='issue') fillMemberDatalists();
+  if(key==='qrprint') fillQRCatSelect();
 }
 
 function toggleSidebar(){
@@ -2185,45 +2193,82 @@ function renderReturnHistory(){
 
 // ===================== QR CODE =====================
 function generateQRCard(book, container){
-  return new Promise(resolve=>{
-    const card = document.createElement('div');
-    card.className='qr-card';
-    const titleEl = document.createElement('div');
-    titleEl.className='qr-title';
-    titleEl.textContent=book.name;
-    card.appendChild(titleEl);
-    const qrDiv=document.createElement('div');
-    card.appendChild(qrDiv);
-    container.appendChild(card);
-    try{
-      new QRCode(qrDiv,{
-        text:book.internal, width:120, height:120,
-        colorDark:'#000000', colorLight:'#ffffff',
-        correctLevel:QRCode.CorrectLevel.H
-      });
-    }catch(e){}
-    const serialEl=document.createElement('div');
-    serialEl.className='qr-serial';
-    serialEl.textContent=book.internal;
-    card.appendChild(serialEl);
-    const metaEl=document.createElement('div');
-    metaEl.className='qr-meta';
-    metaEl.textContent=`${book.author||''} | جلد: ${book.volume||'—'}`;
-    card.appendChild(metaEl);
-    setTimeout(resolve, 50);
-  });
+  const card = document.createElement('div');
+  card.className='qr-card';
+  const titleEl = document.createElement('div');
+  titleEl.className='qr-title';
+  titleEl.textContent=book.name;
+  card.appendChild(titleEl);
+  const qrDiv=document.createElement('div');
+  card.appendChild(qrDiv);
+  try{
+    new QRCode(qrDiv,{
+      text:book.internal, width:120, height:120,
+      colorDark:'#000000', colorLight:'#ffffff',
+      correctLevel:QRCode.CorrectLevel.M
+    });
+  }catch(e){}
+  const serialEl=document.createElement('div');
+  serialEl.className='qr-serial';
+  serialEl.textContent=book.internal;
+  card.appendChild(serialEl);
+  const metaEl=document.createElement('div');
+  metaEl.className='qr-meta';
+  metaEl.textContent=`${book.author||''} | جلد: ${book.volume||'—'}`;
+  card.appendChild(metaEl);
+  container.appendChild(card);
+}
+
+// کتابوں کی فہرست سے QR گرڈ بنائیں (batch میں، تیز رفتار)
+async function renderQRList(list){
+  const grid=document.getElementById('qrGrid');
+  if(!list.length){ grid.innerHTML='<div class="empty">کوئی کتاب نہیں</div>'; return; }
+  grid.innerHTML='<div class="loading"><span class="spin">⟳</span> QR کوڈ بنائے جا رہے ہیں... (0/'+list.length+')</div>';
+  await new Promise(r=>setTimeout(r,30));
+  grid.innerHTML='';
+  const BATCH=50;
+  for(let i=0;i<list.length;i+=BATCH){
+    const frag=document.createDocumentFragment();
+    const chunk=list.slice(i,i+BATCH);
+    for(const book of chunk) generateQRCard(book, frag);
+    grid.appendChild(frag);
+    // بڑی فہرست پر براؤزر کو سانس دلائیں + پیش رفت دکھائیں
+    if(i+BATCH < list.length){
+      const done=Math.min(i+BATCH, list.length);
+      await new Promise(r=>setTimeout(r,0));
+    }
+  }
 }
 
 async function generateAllQR(){
-  const grid=document.getElementById('qrGrid');
-  grid.innerHTML='<div class="loading"><span class="spin">⟳</span> QR کوڈ بنائے جا رہے ہیں...</div>';
-  await new Promise(r=>setTimeout(r,100));
-  grid.innerHTML='';
-  for(const book of books){
-    await generateQRCard(book,grid);
-  }
-  if(!books.length) grid.innerHTML='<div class="empty">کوئی کتاب نہیں</div>';
-  alert2(`${books.length} QR کوڈ تیار`);
+  await renderQRList(books);
+  if(books.length) alert2(`${books.length} QR کوڈ تیار`);
+}
+
+// QR صفحے کا زمرہ ڈراپ ڈاؤن بھریں
+function fillQRCatSelect(){
+  const sel=document.getElementById('qrCatSelect');
+  if(!sel) return;
+  // زمرہ جات + کتابوں میں موجود تمام فنون اکٹھے کریں
+  const fromBooks=[...new Set(books.map(b=>b.artSub||b.category||'').filter(Boolean))];
+  const allCats=[...new Set([...categories, ...fromBooks])].sort();
+  const cur=sel.value;
+  sel.innerHTML=`<option value="">— زمرہ منتخب کریں —</option>`+
+    allCats.map(c=>{
+      const cnt=books.filter(b=>normName(b.artSub||b.category||'')===normName(c)).length;
+      return `<option value="${c}" ${c===cur?'selected':''}>${c} (${cnt})</option>`;
+    }).join('');
+}
+
+// منتخب فن/زمرہ کی تمام کتابوں کے QR بنائیں
+async function generateCategoryQR(){
+  const cat=document.getElementById('qrCatSelect').value;
+  if(!cat){ alert2('پہلے زمرہ منتخب کریں','error'); return; }
+  const catN=normName(cat);
+  const selected=books.filter(b=>normName(b.artSub||b.category||'')===catN);
+  if(!selected.length){ document.getElementById('qrGrid').innerHTML=`<div class="empty">اس فن "${cat}" کی کوئی کتاب نہیں ملی</div>`; return; }
+  await renderQRList(selected);
+  alert2(`🏷 ${cat} — ${selected.length} QR کوڈ تیار`);
 }
 
 async function generateSelectedQR(){
@@ -2231,10 +2276,8 @@ async function generateSelectedQR(){
   if(!val){ alert2('KIT نمبر درج کریں','error'); return; }
   const kits=val.split(',').map(s=>s.trim()).filter(Boolean);
   const selected=books.filter(b=>kits.includes(b.internal));
-  const grid=document.getElementById('qrGrid');
-  grid.innerHTML='';
-  for(const book of selected) await generateQRCard(book,grid);
-  if(!selected.length) grid.innerHTML='<div class="empty">کوئی کتاب نہیں ملی</div>';
+  if(!selected.length){ document.getElementById('qrGrid').innerHTML='<div class="empty">کوئی کتاب نہیں ملی</div>'; return; }
+  await renderQRList(selected);
 }
 
 async function showQRSingle(id){
@@ -2242,7 +2285,7 @@ async function showQRSingle(id){
   if(!book) return;
   const grid=document.getElementById('qrGrid');
   grid.innerHTML='';
-  await generateQRCard(book,grid);
+  generateQRCard(book,grid);
   showSection('qrprint');
 }
 
