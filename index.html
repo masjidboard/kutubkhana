@@ -86,7 +86,7 @@ body.day-mode .modal-bg{background:rgba(0,0,0,0.4)}
 .theme-btn:hover{border-color:var(--gold);color:var(--gold)}
 html,body{height:100%;font-family:var(--font-ur);background:var(--bg);color:var(--text);overflow:hidden}
 /* LAYOUT */
-.app{display:flex;height:100vh;width:100vw;overflow:hidden}
+.app{display:flex;height:100vh;height:100dvh;width:100vw;overflow:hidden}
 /* SIDEBAR */
 .sidebar{width:220px;background:var(--bg2);border-left:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0;transition:transform 0.3s;z-index:50}
 .logo-area{padding:24px 16px 20px;border-bottom:1px solid var(--border2);text-align:center}
@@ -199,6 +199,11 @@ tbody tr:hover{background:rgba(201,168,76,0.04)}
   .sidebar.open{transform:translateX(0)}
   .sidebar-overlay.open{display:block}
   .menu-btn{display:block}
+  .topbar{height:auto;min-height:56px;flex-wrap:wrap;padding:8px 12px;row-gap:8px;align-items:center}
+  .page-title{font-size:16px;flex:1 1 auto;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;order:1}
+  .menu-btn{order:0}
+  .topbar-actions{order:2;flex-wrap:wrap;justify-content:flex-end;gap:6px;width:100%}
+  .topbar-actions .btn,.topbar-actions .theme-btn{padding:6px 10px;font-size:11px;line-height:1.2}
   .stats-grid{grid-template-columns:1fr 1fr}
   .form-grid{grid-template-columns:1fr}
   .form-grid.three{grid-template-columns:1fr 1fr}
