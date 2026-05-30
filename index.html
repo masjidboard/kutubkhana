@@ -677,6 +677,8 @@ body.role-assistant .assistant-show{display:flex!important}
         projectId: <code style="color:var(--gold)">kitabkhana-81879</code> ✅
       </div>
     </div>
+
+    <div class="card">
       <div class="card-title">📥 ایکسل سے امپورٹ</div>
       <p style="font-size:12px;color:var(--text2);margin-bottom:12px;line-height:1.8">
         کالم ترتیب: A=Book Number | B=Art & Sub Subtitle | C=Almari Number | D=Internal Number (خالی ہو تو خودکار KIT بنے گا) | E=Book Name | F=Volume | G=Author | H=Publisher
@@ -764,6 +766,41 @@ body.role-assistant .assistant-show{display:flex!important}
     </div>
   </div>
 
+  <!-- MEMBERS -->
+  <div class="section" id="sec-members">
+    <div class="card admin-only">
+      <div class="card-title">👥 اراکین — ID اور پاسورڈ</div>
+      <div style="font-size:12px;color:var(--text2);margin-bottom:12px;line-height:1.8">
+        جب کوئی کتاب جاری ہوتی ہے تو خودکار ممبر ID اور پاسورڈ بنتا ہے۔ یہاں تمام اراکین کی فہرست اور ان کی جاری کتابیں دیکھیں۔
+      </div>
+      <div id="membersList"></div>
+    </div>
+    <div class="card admin-only" style="margin-top:12px">
+      <div class="card-title">⚙️ پاسورڈ سیٹنگز</div>
+      <div class="form-group">
+        <label>اسسٹنٹ پاسورڈ بدلیں</label>
+        <div style="display:flex;gap:8px">
+          <input type="password" id="newAsstPass" placeholder="نیا پاسورڈ" style="flex:1">
+          <button class="btn success" onclick="changeAsstPass()">محفوظ</button>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>ایڈمن پاسورڈ بدلیں</label>
+        <div style="display:flex;gap:8px">
+          <input type="password" id="newAdminPass" placeholder="نیا پاسورڈ" style="flex:1">
+          <button class="btn primary" onclick="changeAdminPass()">محفوظ</button>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Viewer پاسورڈ بدلیں</label>
+        <div style="display:flex;gap:8px">
+          <input type="password" id="newViewerPass" placeholder="نیا پاسورڈ" style="flex:1">
+          <button class="btn info" onclick="changeViewerPass()">محفوظ</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   </div><!-- /content -->
 </main>
 </div><!-- /app -->
@@ -799,41 +836,6 @@ body.role-assistant .assistant-show{display:flex!important}
     </div>
   </div>
 </div>
-
-  <!-- MEMBERS -->
-  <div class="section" id="sec-members">
-    <div class="card admin-only">
-      <div class="card-title">👥 اراکین — ID اور پاسورڈ</div>
-      <div style="font-size:12px;color:var(--text2);margin-bottom:12px;line-height:1.8">
-        جب کوئی کتاب جاری ہوتی ہے تو خودکار ممبر ID اور پاسورڈ بنتا ہے۔ یہاں تمام اراکین کی فہرست اور ان کی جاری کتابیں دیکھیں۔
-      </div>
-      <div id="membersList"></div>
-    </div>
-    <div class="card admin-only" style="margin-top:12px">
-      <div class="card-title">⚙️ پاسورڈ سیٹنگز</div>
-      <div class="form-group">
-        <label>اسسٹنٹ پاسورڈ بدلیں</label>
-        <div style="display:flex;gap:8px">
-          <input type="password" id="newAsstPass" placeholder="نیا پاسورڈ" style="flex:1">
-          <button class="btn success" onclick="changeAsstPass()">محفوظ</button>
-        </div>
-      </div>
-      <div class="form-group">
-        <label>ایڈمن پاسورڈ بدلیں</label>
-        <div style="display:flex;gap:8px">
-          <input type="password" id="newAdminPass" placeholder="نیا پاسورڈ" style="flex:1">
-          <button class="btn primary" onclick="changeAdminPass()">محفوظ</button>
-        </div>
-      </div>
-      <div class="form-group">
-        <label>Viewer پاسورڈ بدلیں</label>
-        <div style="display:flex;gap:8px">
-          <input type="password" id="newViewerPass" placeholder="نیا پاسورڈ" style="flex:1">
-          <button class="btn info" onclick="changeViewerPass()">محفوظ</button>
-        </div>
-      </div>
-    </div>
-  </div>
 
 <!-- CAMERA SCANNER MODAL -->
 <div class="modal-bg" id="cameraModal">
