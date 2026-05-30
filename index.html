@@ -566,8 +566,14 @@ body.role-assistant .assistant-show{display:flex!important}
           </div>
         </div>
         <div class="form-group">
+          <label>موجودہ رکن ID (اختیاری)</label>
+          <input id="i-memberId" placeholder="مثال: MBR-00001" list="memberIdList" oninput="lookupMember()" style="font-family:var(--font-mono);text-transform:uppercase">
+          <datalist id="memberIdList"></datalist>
+        </div>
+        <div class="form-group">
           <label>رکن کا نام *</label>
-          <input id="i-member" placeholder="قاری کا نام">
+          <input id="i-member" placeholder="قاری کا نام" list="memberNameList" oninput="lookupMemberByName()">
+          <datalist id="memberNameList"></datalist>
         </div>
         <div class="form-group">
           <label>فون نمبر</label>
@@ -578,6 +584,7 @@ body.role-assistant .assistant-show{display:flex!important}
           <input id="i-due" type="date">
         </div>
       </div>
+      <div id="memberMatchInfo" style="font-size:12px;margin:4px 0 8px;min-height:18px"></div>
       <div id="issueInfo" style="font-size:13px;margin:8px 0;min-height:20px"></div>
       <div id="lastIssuedMember" style="display:none;background:rgba(201,168,76,0.1);border:1px solid var(--gold);border-radius:8px;padding:12px;margin-bottom:10px">
         <div style="font-size:12px;color:var(--text2);margin-bottom:6px">✅ آخری جاری کردہ ممبر:</div>
@@ -1355,10 +1362,47 @@ function generateMemberPassword(){
   return pass;
 }
 
-function getOrCreateMember(name, phone){
+function normName(s){
+  s = (s||'').toString();
+  // اردو/عربی اعراب اور غیر مرئی نشانات ہٹائیں
+  s = s.replace(/[\u064B-\u0652\u0670\u0640\u200c\u200d\u200e\u200f]/g,'');
+  // عام اردو حروف کی مختلف شکلیں یکساں کریں
+  s = s.replace(/[يی]/g,'ی').replace(/[كک]/g,'ک').replace(/ۀ/g,'ہ').replace(/[ةه]/g,'ہ').replace(/ؤ/g,'و').replace(/[إأآا]/g,'ا');
+  // اضافی خالی جگہ اور حروف کی ترتیب
+  s = s.trim().toLowerCase().replace(/\s+/g,' ');
+  return s;
+}
+
+// کسی رکن کی اِس وقت جاری شدہ کتابیں (memberId سے، پرانے ریکارڈ کے لیے نام بھی)
+function memberIssuedTx(member){
+  const nm = normName(member.name);
+  return transactions.filter(t =>
+    t.status === 'issued' &&
+    ( (t.memberId && t.memberId === member.memberId) ||
+      (!t.memberId && normName(t.member) === nm) )
+  );
+}
+
+function findMember(name, memberId){
   const members = getMembers();
-  // نام سے موجودہ ممبر تلاش کریں
-  let member = members.find(m => m.name.trim().toLowerCase() === name.trim().toLowerCase());
+  // 1) پہلے ID سے تلاش کریں (سب سے قابلِ بھروسا)
+  if(memberId){
+    const id = memberId.trim().toUpperCase();
+    const byId = members.find(m => (m.memberId||'').toUpperCase() === id);
+    if(byId) return byId;
+  }
+  // 2) پھر نام سے (سپیس/حروف کی ترتیب نظرانداز کر کے)
+  if(name){
+    const n = normName(name);
+    const byName = members.find(m => normName(m.name) === n);
+    if(byName) return byName;
+  }
+  return null;
+}
+
+function getOrCreateMember(name, phone, memberId){
+  const members = getMembers();
+  let member = findMember(name, memberId);
   if(!member){
     member = {
       memberId: generateMemberId(),
@@ -1369,8 +1413,69 @@ function getOrCreateMember(name, phone){
     };
     members.push(member);
     saveMembers(members);
+  } else {
+    // موجودہ ممبر — فون نمبر اپڈیٹ کریں اگر نیا دیا گیا ہو
+    if(phone && !member.phone){
+      member.phone = phone;
+      saveMembers(members);
+    }
   }
   return member;
+}
+
+// issue فارم میں ممبر کی خودکار تجویز کے لیے datalist بھریں
+function fillMemberDatalists(){
+  const members = getMembers();
+  const idList = document.getElementById('memberIdList');
+  const nameList = document.getElementById('memberNameList');
+  if(idList){
+    idList.innerHTML = members.map(m =>
+      `<option value="${m.memberId}">${m.name}</option>`).join('');
+  }
+  if(nameList){
+    nameList.innerHTML = members.map(m =>
+      `<option value="${m.name}">${m.memberId}</option>`).join('');
+  }
+}
+
+// جب عملہ ID لکھے تو خودکار نام بھر دیں
+function lookupMember(){
+  const idInp = document.getElementById('i-memberId');
+  const nameInp = document.getElementById('i-member');
+  const phoneInp = document.getElementById('i-phone');
+  const info = document.getElementById('memberMatchInfo');
+  const id = (idInp.value||'').trim().toUpperCase();
+  if(!id){ if(info) info.innerHTML=''; return; }
+  const m = getMembers().find(mb => (mb.memberId||'').toUpperCase() === id);
+  if(m){
+    nameInp.value = m.name;
+    if(phoneInp && m.phone) phoneInp.value = m.phone;
+    const cnt = memberIssuedTx(m).length;
+    if(info) info.innerHTML = `<span style="color:var(--green)">✅ موجودہ رکن: ${m.name} — اس کے پاس اِس وقت ${cnt} کتابیں ہیں۔ نئی کتاب اسی ID میں جُڑے گی</span>`;
+  } else {
+    if(info) info.innerHTML = `<span style="color:var(--text3)">یہ ID موجود نہیں — نام درج کریں، نیا رکن بنے گا</span>`;
+  }
+}
+
+// جب عملہ نام لکھے تو دیکھیں کہ پہلے سے موجود ہے یا نہیں
+function lookupMemberByName(){
+  const idInp = document.getElementById('i-memberId');
+  const nameInp = document.getElementById('i-member');
+  const phoneInp = document.getElementById('i-phone');
+  const info = document.getElementById('memberMatchInfo');
+  // اگر ID پہلے سے بھرا ہے تو نام والی تجویز نہ چھیڑیں
+  if(idInp && idInp.value.trim()) return;
+  const name = (nameInp.value||'').trim();
+  if(!name){ if(info) info.innerHTML=''; return; }
+  const m = getMembers().find(mb => normName(mb.name) === normName(name));
+  if(m){
+    if(idInp) idInp.value = m.memberId;
+    if(phoneInp && m.phone) phoneInp.value = m.phone;
+    const cnt = memberIssuedTx(m).length;
+    if(info) info.innerHTML = `<span style="color:var(--green)">✅ موجودہ رکن ملا: ${m.memberId} — اس کے پاس اِس وقت ${cnt} کتابیں ہیں۔ نئی کتاب اسی ID میں جُڑے گی</span>`;
+  } else {
+    if(info) info.innerHTML = `<span style="color:var(--gold)">🆕 نیا رکن — نیا ID بنے گا</span>`;
+  }
 }
 
 function showMemberPortal(member){
@@ -1379,10 +1484,7 @@ function showMemberPortal(member){
   document.getElementById('portalMemberName').textContent = '👤 ' + member.name;
   document.getElementById('portalMemberId').textContent = member.memberId;
 
-  const myBooks = transactions.filter(t => {
-    const m = getMembers().find(mb => mb.memberId === member.memberId);
-    return m && t.member.trim().toLowerCase() === m.name.trim().toLowerCase() && t.status === 'issued';
-  });
+  const myBooks = memberIssuedTx(member);
 
   const container = document.getElementById('portalBooks');
   if(!myBooks.length){
@@ -1391,7 +1493,8 @@ function showMemberPortal(member){
   }
 
   const today = new Date();
-  container.innerHTML = myBooks.map(t => {
+  const header = `<div style="font-size:13px;color:var(--gold);font-weight:600;margin-bottom:10px">📚 آپ کے پاس اِس وقت ${myBooks.length} کتابیں ہیں</div>`;
+  container.innerHTML = header + myBooks.map(t => {
     const dueDate = t.due ? new Date(t.due) : null;
     const isOverdue = dueDate && dueDate < today;
     return `<div class="book-card">
@@ -1414,8 +1517,21 @@ function renderMembersList(){
     return;
   }
   container.innerHTML = members.map(m => {
-    const active = transactions.filter(t => t.member.trim().toLowerCase() === m.name.trim().toLowerCase() && t.status === 'issued');
-    return `<div style="background:var(--bg3);border-radius:10px;padding:14px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
+    const active = memberIssuedTx(m);
+    const today = new Date();
+    const booksHtml = active.length ? `
+      <div style="width:100%;margin-top:10px;border-top:1px solid var(--border);padding-top:10px">
+        <div style="font-size:11px;color:var(--gold);margin-bottom:6px">📚 اِس وقت اس کے پاس ${active.length} کتابیں:</div>
+        ${active.map(t=>{
+          const dueDate = t.due ? new Date(t.due) : null;
+          const isOverdue = dueDate && dueDate < today;
+          return `<div style="font-size:12px;color:var(--text2);padding:4px 0;display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap">
+            <span>📖 ${t.bookName} <span style="color:var(--text3);font-family:var(--font-mono)">(${t.kit})</span></span>
+            ${t.due?`<span style="color:${isOverdue?'var(--red)':'var(--text3)'}">⏰ ${t.due}${isOverdue?' ⚠️':''}</span>`:''}
+          </div>`;
+        }).join('')}
+      </div>` : '';
+    return `<div style="background:var(--bg3);border-radius:10px;padding:14px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:8px">
       <div>
         <div style="font-weight:600;font-size:14px">👤 ${m.name}</div>
         <div style="font-size:11px;color:var(--text3);font-family:var(--font-mono);margin-top:3px">ID: <strong style="color:var(--gold)">${m.memberId}</strong> | پاسورڈ: <strong>${m.password}</strong></div>
@@ -1425,6 +1541,7 @@ function renderMembersList(){
         <span class="badge ${active.length?'issued':'avail'}">${active.length} کتاب جاری</span>
         <button class="btn sm info" onclick="copyMemberCreds('${m.memberId}','${m.name}','${m.password}')" style="font-size:10px">📋 کاپی</button>
       </div>
+      ${booksHtml}
     </div>`;
   }).join('');
 }
@@ -1524,6 +1641,7 @@ function showSection(key){
   if(key==='add') refreshKIT();
   if(key==='categories') renderCategories();
   if(key==='members') renderMembersList();
+  if(key==='issue') fillMemberDatalists();
 }
 
 function toggleSidebar(){
@@ -1974,9 +2092,10 @@ function doIssue(){
   if(!book){ alert2('کتاب نہیں ملی','error'); return; }
   if(book.status==='issued'){ alert2('یہ کتاب پہلے سے جاری ہے','error'); return; }
 
-  // خودکار ممبر ID بنائیں یا موجودہ تلاش کریں
+  // خودکار ممبر ID بنائیں یا موجودہ تلاش کریں (ID یا نام سے)
   const phone = document.getElementById('i-phone').value.trim();
-  const memberObj = getOrCreateMember(member, phone);
+  const enteredId = document.getElementById('i-memberId').value.trim();
+  const memberObj = getOrCreateMember(member, phone, enteredId);
 
   // کرنٹ تاریخ
   const now = new Date();
@@ -2009,8 +2128,10 @@ function doIssue(){
   }
 
   saveData();
-  ['i-kit','i-member','i-phone'].forEach(id=>document.getElementById(id).value='');
+  ['i-kit','i-member','i-phone','i-memberId'].forEach(id=>document.getElementById(id).value='');
+  const mm = document.getElementById('memberMatchInfo'); if(mm) mm.innerHTML='';
   document.getElementById('issueInfo').innerHTML='';
+  fillMemberDatalists();
   renderDashboard();
   renderMembersList();
 
@@ -2046,7 +2167,7 @@ function doReturn(){
   saveData();
   document.getElementById('r-kit').value='';
   document.getElementById('returnInfo').innerHTML='';
-  renderReturnHistory(); renderDashboard();
+  renderReturnHistory(); renderDashboard(); renderMembersList();
   alert2(`📥 ${book.name} واپس ہوگئی — ${returnedDate}`);
 }
 
@@ -2291,6 +2412,7 @@ populateCatSelects();
 renderDashboard();
 updateLibIdDisplay();
 startAutoSync();
+fillMemberDatalists();
 
 // Default due date
 const due=new Date(); due.setDate(due.getDate()+14);
