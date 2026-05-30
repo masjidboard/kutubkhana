@@ -6,7 +6,7 @@
   "display": "standalone",
   "background_color": "#0f1923",
   "theme_color": "#0f1923",
-  "orientation": "any",
+  "orientation": "portrait",
   "lang": "ur",
   "dir": "rtl",
   "icons": [
@@ -24,5 +24,8 @@
     }
   ],
   "screenshots": [],
-  "categories": ["productivity", "utilities"]
+  "categories": [
+    "productivity",
+    "utilities"
+  ]
 }

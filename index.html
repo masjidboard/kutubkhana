@@ -2457,6 +2457,17 @@ updateLibIdDisplay();
 startAutoSync();
 fillMemberDatalists();
 
+// پورٹریٹ لاک — صرف انسٹال شدہ PWA / فل اسکرین میں کام کرتا ہے (براؤزر ٹیب میں نہیں)
+function lockPortrait(){
+  try{
+    if(screen.orientation && screen.orientation.lock){
+      screen.orientation.lock('portrait').catch(()=>{});
+    }
+  }catch(e){}
+}
+lockPortrait();
+window.addEventListener('orientationchange', lockPortrait);
+
 // Default due date
 const due=new Date(); due.setDate(due.getDate()+14);
 document.getElementById('i-due').value=due.toISOString().split('T')[0];
