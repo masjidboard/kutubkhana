@@ -299,23 +299,6 @@ body.role-assistant .danger-zone{display:none!important}
 body.role-assistant .delete-btn{display:none!important}
 body.role-assistant .edit-btn{display:none!important}
 body.role-assistant .assistant-show{display:flex!important}
-
-/* پورٹریٹ زبردستی — اگر فون لینڈ اسکیپ ہو جائے (JS لاک ناکام ہونے کی صورت میں حفاظتی تہہ) */
-@media screen and (orientation: landscape) and (max-width: 1024px){
-  html{overflow:hidden}
-  body{
-    transform: rotate(-90deg);
-    transform-origin: left top;
-    width: 100vh;
-    height: 100vw;
-    overflow-x: hidden;
-    overflow-y: auto;
-    position: absolute;
-    top: 100%;
-    left: 0;
-  }
-  .app{height:100vw;width:100vh}
-}
 </style>
 </head>
 <body>
@@ -2473,17 +2456,6 @@ renderDashboard();
 updateLibIdDisplay();
 startAutoSync();
 fillMemberDatalists();
-
-// پورٹریٹ لاک — صرف انسٹال شدہ PWA / فل اسکرین میں کام کرتا ہے (براؤزر ٹیب میں نہیں)
-function lockPortrait(){
-  try{
-    if(screen.orientation && screen.orientation.lock){
-      screen.orientation.lock('portrait').catch(()=>{});
-    }
-  }catch(e){}
-}
-lockPortrait();
-window.addEventListener('orientationchange', lockPortrait);
 
 // Default due date
 const due=new Date(); due.setDate(due.getDate()+14);
